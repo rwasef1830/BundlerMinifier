@@ -8,7 +8,7 @@
     <DefineConstants>$(DefineConstants);DOTNET</DefineConstants>
     <AssemblyName>dotnet-bundle</AssemblyName>
     <OutputType>Exe</OutputType>
-    <PackageId>BundlerMinifier.Core</PackageId>
+    <PackageId>BundlerMinifier.Core.Tool</PackageId>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
