@@ -40,6 +40,11 @@ namespace BundlerMinifier
                 settings.IndentSize = size;
 
             settings.IgnoreErrorList = GetValue(bundle, "ignoreErrorList", "");
+            
+            if (long.TryParse(GetValue(bundle, "killSwitch", "0"), out var killSwitch))
+            {
+                settings.KillSwitch = killSwitch;
+            }
 
             return settings;
         }
