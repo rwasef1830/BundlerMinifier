@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26226.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30804.86
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E9E392DE-6C44-4AD2-858C-D73AD3016E6E}"
 	ProjectSection(SolutionItems) = preProject
@@ -9,18 +9,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BundlerMinifierVsix", "src\BundlerMinifierVsix\BundlerMinifierVsix.csproj", "{49C270BE-9645-40D5-BE08-91ADE243D394}"
-	ProjectSection(ProjectDependencies) = postProject
-		{005A7A66-2F08-4A2C-9230-F4FA31A6804B} = {005A7A66-2F08-4A2C-9230-F4FA31A6804B}
-	EndProjectSection
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BundlerMinifier", "src\BundlerMinifier\BundlerMinifier.csproj", "{B714B5B9-27C4-443C-9517-FE5C5EF46EA2}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BundlerMinifierTest", "src\BundlerMinifierTest\BundlerMinifierTest.csproj", "{43AAA3AD-A806-45A0-99A3-F0E7E3B81AEB}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BundlerMinifier.Core", "src\BundlerMinifier.Core\BundlerMinifier.Core.csproj", "{135A8112-B264-4FB6-B7B4-6139FB8810D4}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BundlerMinifierConsole", "src\BundlerMinifierConsole\BundlerMinifierConsole.csproj", "{005A7A66-2F08-4A2C-9230-F4FA31A6804B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BundlerMinifier.TagHelpers", "src\BundlerMinifier.TagHelpers\BundlerMinifier.TagHelpers.csproj", "{2825CF4A-3F4C-4DC6-AEBB-09E71474D844}"
 EndProject
@@ -30,14 +21,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{49C270BE-9645-40D5-BE08-91ADE243D394}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{49C270BE-9645-40D5-BE08-91ADE243D394}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{49C270BE-9645-40D5-BE08-91ADE243D394}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{49C270BE-9645-40D5-BE08-91ADE243D394}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B714B5B9-27C4-443C-9517-FE5C5EF46EA2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B714B5B9-27C4-443C-9517-FE5C5EF46EA2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B714B5B9-27C4-443C-9517-FE5C5EF46EA2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B714B5B9-27C4-443C-9517-FE5C5EF46EA2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{43AAA3AD-A806-45A0-99A3-F0E7E3B81AEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{43AAA3AD-A806-45A0-99A3-F0E7E3B81AEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{43AAA3AD-A806-45A0-99A3-F0E7E3B81AEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -46,10 +29,6 @@ Global
 		{135A8112-B264-4FB6-B7B4-6139FB8810D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{135A8112-B264-4FB6-B7B4-6139FB8810D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{135A8112-B264-4FB6-B7B4-6139FB8810D4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{005A7A66-2F08-4A2C-9230-F4FA31A6804B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{005A7A66-2F08-4A2C-9230-F4FA31A6804B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{005A7A66-2F08-4A2C-9230-F4FA31A6804B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{005A7A66-2F08-4A2C-9230-F4FA31A6804B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2825CF4A-3F4C-4DC6-AEBB-09E71474D844}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2825CF4A-3F4C-4DC6-AEBB-09E71474D844}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2825CF4A-3F4C-4DC6-AEBB-09E71474D844}.Release|Any CPU.ActiveCfg = Release|Any CPU
