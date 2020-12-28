@@ -24,3 +24,5 @@ x64/
 *.ncrunchproject
 _NCrunch_WebCompiler
 project.lock.json
+
+launchSettings.json
