@@ -1,6 +1,5 @@
-### Installed product versions
-- Visual Studio: [example 2015 Professional]
-- This extension: [example 1.1.21]
+### Package version
+- It will be found in project root/.config/dotnet-tools.json
 
 ### Description
 Replace this text with a short description
