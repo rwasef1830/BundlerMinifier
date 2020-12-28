@@ -1,13 +1,12 @@
 <Project>
   <PropertyGroup>
-    <Copyright>Copyright 2017</Copyright>
-    <Authors>Mads Kristensen</Authors>
+    <Copyright>Copyright 2020</Copyright>
+    <Authors>Mads Kristensen, Raif Atef</Authors>
     <Description>Bundles and minifies CSS, JS and HTML files</Description>
     <PackageTags>concat;bundle;minify;minification;css;js;html</PackageTags>
-    <PackageIconUrl>https://raw.githubusercontent.com/madskristensen/BundlerMinifier/master/src/BundlerMinifierVsix/Resources/icon.png</PackageIconUrl>
-    <PackageLicenseUrl>https://github.com/madskristensen/BundlerMinifier/blob/master/LICENSE</PackageLicenseUrl>
+    <License>Apache-2.0</License>
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/madskristensen/BundlerMinifier</RepositoryUrl>
+    <RepositoryUrl>https://github.com/rwasef1830/BundlerMinifier</RepositoryUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 </Project>
