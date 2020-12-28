@@ -4,7 +4,7 @@
     <Authors>Mads Kristensen, Raif Atef</Authors>
     <Description>Bundles and minifies CSS, JS and HTML files</Description>
     <PackageTags>concat;bundle;minify;minification;css;js;html</PackageTags>
-    <License>Apache-2.0</License>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/rwasef1830/BundlerMinifier</RepositoryUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
