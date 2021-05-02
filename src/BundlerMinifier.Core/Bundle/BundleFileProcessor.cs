@@ -160,6 +160,11 @@ namespace BundlerMinifier
                 }
             }
 
+            if (minResult?.HasErrors ?? false)
+            {
+                throw new Exception("Minification failed.");
+            }
+
             if (bundle.IsGzipEnabled)
             {
                 var fileToGzip = bundle.IsMinificationEnabled ?

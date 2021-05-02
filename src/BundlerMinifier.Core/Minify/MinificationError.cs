@@ -37,7 +37,7 @@ namespace BundlerMinifier
         /// <returns></returns>
         public override string ToString()
         {
-            return Message;
+            return $"{FileName}: Line {LineNumber}, Column: {ColumnNumber}: {Message}";
         }
     }
 }
