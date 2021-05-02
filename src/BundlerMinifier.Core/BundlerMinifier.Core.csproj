@@ -3,7 +3,7 @@
   <Import Project="..\common.props" />
 
   <PropertyGroup>
-    <Version>4.2.0</Version>
+    <Version>4.3.0</Version>
     <TargetFrameworks>netcoreapp2.1;netcoreapp3.1;net50</TargetFrameworks>
     <DefineConstants>$(DefineConstants);DOTNET</DefineConstants>
     <AssemblyName>dotnet-bundle</AssemblyName>
