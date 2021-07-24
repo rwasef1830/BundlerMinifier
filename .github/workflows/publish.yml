@@ -1,0 +1,24 @@
+name: publish to nuget
+on:
+  push:
+    branches:
+      - raif
+  workflow_dispatch:
+jobs:
+  publish:
+    name: build, pack & publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: publish on version change
+        id: publish_nuget
+        uses: rohith/publish-nuget@v2
+        with:
+          PROJECT_FILE_PATH: src/BundlerMinifier.Core/BundlerMinifier.Core.csproj
+          PACKAGE_NAME: BundlerMinifier.Core.Tool
+          VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
+          TAG_COMMIT: true
+          TAG_FORMAT: *
+          NUGET_KEY: ${{secrets.NUGET_API_KEY}}
+          NUGET_SOURCE: https://api.nuget.org
+          INCLUDE_SYMBOLS: true
