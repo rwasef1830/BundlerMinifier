@@ -1,9 +1,15 @@
 # Bundler and Minifier
 
+[![Nuget](https://img.shields.io/nuget/v/BundlerMinifier.Core.Tool)](https://www.nuget.org/packages/BundlerMinifier.Core.Tool/)
+
 A .NET Core tool that let's you configure bundling and minification of JS, CSS and HTML files.
 This is a simplified fork of https://github.com/madskristensen/BundlerMinifier that is kept
 more up-to-date with NUglify and implements some missing features. It has been repackaged
 into a .NET Core tool.
+
+GitHub actions have been setup such that new NuGet releases of NUglify will automatically trigger
+a release and publish of this tool with an incremented version number, so this tool should track NUglify 
+fairly closely. Enjoy! 👍
 
 Install it by running `dotnet tool install BundlerMinifier.Core.Tool`
 Invoke it by calling `dotnet tool run bundle`.
