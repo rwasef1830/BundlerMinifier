@@ -18,7 +18,7 @@ jobs:
           PACKAGE_NAME: BundlerMinifier.Core.Tool
           VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
           TAG_COMMIT: true
-          TAG_FORMAT: *
+          TAG_FORMAT: '*'
           NUGET_KEY: ${{secrets.NUGET_API_KEY}}
           NUGET_SOURCE: https://api.nuget.org
           INCLUDE_SYMBOLS: true
