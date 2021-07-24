@@ -1,4 +1,4 @@
-name: TrackNUglify
+name: update if nuglify released a new version
 
 on:
   schedule:
