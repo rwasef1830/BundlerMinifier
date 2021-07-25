@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: publish on version change
         id: publish_nuget
-        uses: rohith/publish-nuget@v2
+        uses: waldosax/publish-nuget@95f8e50d8df92e9bafae7188c5345a3534774d94
         with:
           PROJECT_FILE_PATH: src/BundlerMinifier.Core/BundlerMinifier.Core.csproj
           PACKAGE_NAME: BundlerMinifier.Core.Tool
