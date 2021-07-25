@@ -15,6 +15,11 @@ namespace BundlerMinifier
         /// The absolute file path of the file being minified.
         /// </summary>
         public string FileName { get; set; }
+        
+        /// <summary>
+        /// Error code (can be used in minify.ignoreErrorList in the bundle)
+        /// </summary>
+        public string ErrorCode { get; set; }
 
         /// <summary>
         /// The error message from the compiler.
@@ -37,7 +42,7 @@ namespace BundlerMinifier
         /// <returns></returns>
         public override string ToString()
         {
-            return $"{FileName}: Line {LineNumber}, Column: {ColumnNumber}: {Message}";
+            return $"{ErrorCode}: {FileName}: Line {LineNumber}, Column: {ColumnNumber}: {Message}";
         }
     }
 }

@@ -158,6 +158,7 @@ namespace BundlerMinifier
                 var minError = new MinificationError
                 {
                     FileName = minResult.FileName,
+                    ErrorCode = error.ErrorCode,
                     Message = error.Message,
                     LineNumber = error.StartLine,
                     ColumnNumber = error.StartColumn
