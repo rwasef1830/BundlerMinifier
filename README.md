@@ -50,7 +50,10 @@ Here's an example of what that file looks like:
     ],
     "minify": {
         "enabled": true,
-        "commentMode": "all"
+        "commentMode": "all",
+        "renameLocals": true,
+        "ignoreErrorList": "JS1292,JS1315",
+        "gzip": true
     }
   },
   {
