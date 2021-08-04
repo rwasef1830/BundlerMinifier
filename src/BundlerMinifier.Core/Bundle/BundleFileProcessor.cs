@@ -167,13 +167,12 @@ namespace BundlerMinifier
 
             if (bundle.IsGzipEnabled)
             {
-                var fileToGzip = bundle.IsMinificationEnabled ?
-                    minFile : bundle.GetAbsoluteOutputFile();
+                var fileToGzip = bundle.IsMinificationEnabled ? minFile : bundle.GetAbsoluteOutputFile();
 
                 if (minResult == null)
-                    BundleMinifier.GzipFile(fileToGzip, bundle, false, File.ReadAllText(fileToGzip));
+                    BundleMinifier.CompressFile(fileToGzip, bundle, false, File.ReadAllText(fileToGzip));
                 else
-                    BundleMinifier.GzipFile(fileToGzip, bundle, minResult.Changed, minResult.MinifiedContent);
+                    BundleMinifier.CompressFile(fileToGzip, bundle, minResult.Changed, minResult.MinifiedContent);
             }
 
             return changed;

@@ -129,25 +129,65 @@ namespace BundlerMinifier
             }
         }
 
-        [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
-        public static void GzipFile(string sourceFile, Bundle bundle, bool minificationChanged, string minifiedContent)
+        public static void CompressFile(string sourceFile, Bundle bundle, bool minificationChanged, string minifiedContent)
         {
-            var gzipFile = sourceFile + ".gz";
-            var containsChanges = minificationChanged || File.GetLastWriteTimeUtc(gzipFile) < File.GetLastWriteTimeUtc(sourceFile);
+            GzipFile(sourceFile, bundle, minificationChanged, minifiedContent);
+            BrotliFile(sourceFile, bundle, minificationChanged, minifiedContent);
+        }
+        
+        private static void GzipFile(string sourceFile, Bundle bundle, bool minificationChanged, string minifiedContent)
+        {
+            CompressFile(
+                sourceFile,
+                bundle,
+                minificationChanged,
+                minifiedContent,
+                "gz",
+                s => new GZipStream(s, CompressionLevel.Optimal));
+        }
 
-            OnBeforeWritingGzipFile(sourceFile, gzipFile, bundle, containsChanges);
-            
+        private static void BrotliFile(string sourceFile, Bundle bundle, bool minificationChanged, string minifiedContent)
+        {
+            CompressFile(
+                sourceFile,
+                bundle,
+                minificationChanged,
+                minifiedContent,
+                "br",
+                s => new BrotliStream(s, CompressionLevel.Optimal));
+        }
+
+        [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
+        private static void CompressFile(
+            string sourceFile,
+            Bundle bundle,
+            bool minificationChanged,
+            string minifiedContent,
+            string extensionWithoutDot,
+            Func<Stream, Stream> compressorConstructor)
+        {
+            if (string.IsNullOrWhiteSpace(extensionWithoutDot))
+            {
+                throw new ArgumentException("Value cannot be empty or whitespace", nameof(extensionWithoutDot));
+            }
+
+            var compressedFile = sourceFile + "." + extensionWithoutDot;
+            var containsChanges = minificationChanged
+                                  || File.GetLastWriteTimeUtc(compressedFile) < File.GetLastWriteTimeUtc(sourceFile);
+
+            OnBeforeWritingGzipFile(sourceFile, compressedFile, bundle, containsChanges);
+
             if (containsChanges)
             {
                 byte[] buffer = Encoding.UTF8.GetBytes(minifiedContent ?? bundle.Output);
 
-                using (var fileStream = File.OpenWrite(gzipFile))
-                using (var gzipStream = new GZipStream(fileStream, CompressionLevel.Optimal))
+                using (var fileStream = File.OpenWrite(compressedFile))
+                using (var compressorStream = compressorConstructor(fileStream))
                 {
-                    gzipStream.Write(buffer, 0, buffer.Length);
+                    compressorStream.Write(buffer, 0, buffer.Length);
                 }
 
-                OnAfterWritingGzipFile(sourceFile, gzipFile, bundle, containsChanges);
+                OnAfterWritingGzipFile(sourceFile, compressedFile, bundle, containsChanges);
             }
         }
 
