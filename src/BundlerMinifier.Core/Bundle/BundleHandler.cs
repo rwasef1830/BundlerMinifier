@@ -54,13 +54,15 @@ namespace BundlerMinifier
                     return false;
                 }
 
-                configFile = new FileInfo(configFile).FullName;
+                var bundleFileInfo = new FileInfo(configFile);
+                configFile = bundleFileInfo.FullName;
                 string content = File.ReadAllText(configFile);
                 bundles = JArray.Parse(content).ToObject<Bundle[]>();
 
                 foreach (Bundle bundle in bundles)
                 {
                     bundle.FileName = configFile;
+                    bundle.MostRecentWrite = bundleFileInfo.LastWriteTimeUtc;
                 }
 
                 return true;
@@ -81,7 +83,7 @@ namespace BundlerMinifier
 
         public static void ProcessBundle(string baseFolder, Bundle bundle)
         {
-            DateTime mostRecentWrite = default(DateTime);
+            DateTime mostRecentWrite = bundle.MostRecentWrite;
             StringBuilder sb = new StringBuilder();
             List<string> inputFiles = bundle.GetAbsoluteInputFiles();
 
