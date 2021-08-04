@@ -73,6 +73,10 @@ Here's an example of what that file looks like:
 ]
 ```
 
+There's additional switches that are possible in the minify section, see
+src/BundlerMinifier.Core/JavaScriptOptions.cs and src/BundlerMinifier.Core/CssOptions.cs
+for the complete list of values.
+
 ## Contribute
 Check out the [contribution guidelines](.github/CONTRIBUTING.md)
 if you want to contribute to this project.
