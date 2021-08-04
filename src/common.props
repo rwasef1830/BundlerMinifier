@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <Copyright>Copyright 2020</Copyright>
+    <Copyright>Copyright 2021</Copyright>
     <Authors>Mads Kristensen, Raif Atef</Authors>
     <Description>Bundles and minifies CSS, JS and HTML files</Description>
     <PackageTags>concat;bundle;minify;minification;css;js;html</PackageTags>
