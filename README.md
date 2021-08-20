@@ -74,7 +74,7 @@ Here's an example of what that file looks like:
 ```
 
 There are some additional values that are possible in the minify section, see
-src/BundlerMinifier.Core/JavaScriptOptions.cs and src/BundlerMinifier.Core/CssOptions.cs
+src/BundlerMinifier.Core/Minify/JavaScriptOptions.cs and src/BundlerMinifier.Core/Minify/CssOptions.cs
 for the complete list.
 
 ## Contribute
