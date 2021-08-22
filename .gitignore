@@ -26,3 +26,5 @@ _NCrunch_WebCompiler
 project.lock.json
 
 launchSettings.json
+/src/BundlerMinifierTest/artifacts/*.br
+/src/BundlerMinifierTest/artifacts/*.gz
