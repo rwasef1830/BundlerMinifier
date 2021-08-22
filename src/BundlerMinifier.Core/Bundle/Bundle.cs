@@ -133,6 +133,7 @@ namespace BundlerMinifier
                         if (notifyOnPatternMiss && !File.Exists(fullPath))
                         {
                             Console.WriteLine($"  {inputFile} was not found".Orange().Bright());
+                            throw new FileNotFoundException(inputFile);
                         }
                     }
                 }

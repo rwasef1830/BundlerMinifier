@@ -117,6 +117,13 @@ namespace BundlerMinifierTest
         }
 
         [TestMethod]
+        public void Process_WithMissingFiles_ShouldThrow()
+        {
+            Assert.ThrowsException<FileNotFoundException>(() =>
+                _processor.Process(TEST_BUNDLE.Replace("test1", "test10")));
+        }
+
+        [TestMethod]
         public void Minify()
         {
             var bundles = BundleHandler.GetBundles(TEST_BUNDLE);
