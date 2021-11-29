@@ -3,8 +3,8 @@
   <Import Project="..\common.props" />
 
   <PropertyGroup>
-    <Version>4.4.12</Version>
-    <TargetFrameworks>netcoreapp2.1;netcoreapp3.1;net50</TargetFrameworks>
+    <Version>4.5.0</Version>
+    <TargetFrameworks>netcoreapp3.1;net50;net60</TargetFrameworks>
     <DefineConstants>$(DefineConstants);DOTNET</DefineConstants>
     <AssemblyName>dotnet-bundle</AssemblyName>
     <OutputType>Exe</OutputType>
