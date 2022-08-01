@@ -24,7 +24,7 @@ jobs:
           git_commit_gpgsign: true
       - name: Configure git
         run: |
-          gpg-agent && gpg-agent --daemon
+          gpg-agent
           touch test
           git add test
           git commit -S -m "Test"
