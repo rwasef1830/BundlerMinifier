@@ -22,6 +22,15 @@ jobs:
           gpg_private_key: ${{ secrets.GPG_KEY }}
           git_user_signingkey: true
           git_commit_gpgsign: true
+      - name: Update Trust = Trust myself
+        id: trust_myself
+        run: |
+          gpg --no-tty --command-fd 0 --edit-key ${{ steps.vars.outputs.keyid }} << EOTRUST
+          trust
+          5
+          y
+          quit
+          EOTRUST
       - name: Configure git
         run: |
           gpg-agent
