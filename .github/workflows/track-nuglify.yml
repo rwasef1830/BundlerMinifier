@@ -27,7 +27,7 @@ jobs:
           gpg-connect-agent reloadagent /bye
           touch test
           git add test
-          git commit -S -m "Test"
+          GIT_TRACE=1 git commit -S -m "Test"
           git reset --hard HEAD~1
       - name: Update NUglify version
         run: |
