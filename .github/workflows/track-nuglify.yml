@@ -31,5 +31,8 @@ jobs:
           sed -i -r 's#<Version>(.*)\.([[:digit:]]+)</Version>#echo "    <Version>\1\.$((\2+1))</Version>"#e' src/BundlerMinifier.Core/BundlerMinifier.Core.csproj
           git config --global user.name 'Raif Atef'
           git config --global user.email 'rwasef1830@users.noreply.github.com'
+          git config --global user.signingkey '${{ secrets.GPG_SIGNING_ID }}'
+          git config --global commit.gpgsign 'true'
+          cat <(echo -e "${{ secrets.GPG_KEY }}") | gpg --batch --import
           git commit -am "New version tracking new NUglify release"
           git push
