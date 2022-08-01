@@ -16,16 +16,19 @@ jobs:
         with:
           ref: 'raif'
           token: ${{ secrets.PAT }}
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v5
+        with:
+          gpg_private_key: ${{ secrets.GPG_KEY }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
       - name: Configure git
         run: |
           git config --global user.name 'Raif Atef'
           git config --global user.email 'rwasef1830@users.noreply.github.com'
-          git config --global user.signingkey '${{ secrets.GPG_SIGNING_ID }}'
-          git config --global commit.gpgsign 'true'
-          cat <(echo -e "${{ secrets.GPG_KEY }}") | gpg --batch --import
           touch test
           git add test
-          git commit -m "Test"
+          git commit -S -m "Test"
           git reset --hard HEAD~1
       - name: Update NUglify version
         run: |
