@@ -24,8 +24,7 @@ jobs:
           git_commit_gpgsign: true
       - name: Configure git
         run: |
-          git config --global user.name 'Raif Atef'
-          git config --global user.email 'rwasef1830@users.noreply.github.com'
+          gpg-agent && gpg-agent --daemon
           touch test
           git add test
           git commit -S -m "Test"
