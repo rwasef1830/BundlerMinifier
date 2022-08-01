@@ -28,7 +28,7 @@ jobs:
           gpg-connect-agent reloadagent /bye
           echo "#!/bin/sh" > ~/.gpg-pinentry-loopback
           echo "gpg --pinentry-mode loopback $@" >> ~/.gpg-pinentry-loopback
-          git config --global gpg.program "~/.gpg-pinentry-loopback"
+          git config --global gpg.program "$HOME/.gpg-pinentry-loopback"
           touch test
           git add test
           GIT_TRACE=1 git commit -S -m "Test"
