@@ -22,19 +22,9 @@ jobs:
           gpg_private_key: ${{ secrets.GPG_KEY }}
           git_user_signingkey: true
           git_commit_gpgsign: true
-      - name: Update Trust = Trust myself
-        id: trust_myself
-        run: |
-          gpg --no-tty --command-fd 0 --edit-key $(git config --list | grep key | cut -d= -f2) << EOTRUST
-          trust
-          5
-          y
-          quit
-          EOTRUST
       - name: Configure git
         run: |
-          export GPG_TTY=$(tty)
-          gpg-agent
+          gpg-connect-agent reloadagent /bye
           touch test
           git add test
           git commit -S -m "Test"
