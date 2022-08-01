@@ -33,6 +33,7 @@ jobs:
           EOTRUST
       - name: Configure git
         run: |
+          export GPG_TTY=$(tty)
           gpg-agent
           touch test
           git add test
