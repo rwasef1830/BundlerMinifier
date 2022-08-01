@@ -25,7 +25,7 @@ jobs:
       - name: Update Trust = Trust myself
         id: trust_myself
         run: |
-          gpg --no-tty --command-fd 0 --edit-key ${{ steps.vars.outputs.keyid }} << EOTRUST
+          gpg --no-tty --command-fd 0 --edit-key $(git config --list | grep key | cut -d= -f2) << EOTRUST
           trust
           5
           y
