@@ -23,12 +23,6 @@ jobs:
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
           git_user_signingkey: true
           git_commit_gpgsign: true
-      - name: Configure git
-        run: |
-          touch test
-          git add test
-          GIT_TRACE=1 git commit -S -m "Test"
-          git reset --hard HEAD~1
       - name: Update NUglify version
         run: |
           NUGLIFY=$(curl -s https://www.nuget.org/packages/NUglify/atom.xml \
