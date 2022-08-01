@@ -29,6 +29,7 @@ jobs:
           echo "#!/bin/sh" > ~/.gpg-pinentry-loopback
           echo "gpg --pinentry-mode loopback $@" >> ~/.gpg-pinentry-loopback
           chmod +x ~/.gpg-pinentry-loopback
+          GPG_TTY=$(tty) /home/runner/.gpg-pinentry-loopback --status-fd=2 -bsau 5F4D97A509FAFFFA
           git config --global gpg.program "$HOME/.gpg-pinentry-loopback"
           touch test
           git add test
