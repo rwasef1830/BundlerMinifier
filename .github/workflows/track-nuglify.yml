@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '6.0.x'
+          dotnet-version: '7.0.x'
       - uses: actions/checkout@v2
         with:
           ref: 'raif'
@@ -23,18 +23,23 @@ jobs:
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
           git_user_signingkey: true
           git_commit_gpgsign: true
-      - name: Update NUglify version
+      - name: Fetch NUglify version
         run: |
           NUGLIFY=$(curl -s https://www.nuget.org/packages/NUglify/atom.xml \
           | grep -oPm1 "(?<=<id>https://www.nuget.org/packages/NUglify/)[^<]+" \
           | head -n1); 
+          echo "NUGLIFY=$NUGLIFY" >> "$GITHUB_ENV"
+      - name: Update NUglify version
+        if: env.NUGLIFY != ''
+        run: |
+          NUGLIFY=${{ env.NUGLIFY }}
           sed -i "s#<PackageReference Include=\"NUglify\" Version=\".*\" />#<PackageReference Include=\"NUglify\" Version=\"$NUGLIFY\" />#" src/BundlerMinifier.Core/BundlerMinifier.Core.csproj
       - name: Check for modified files
         id: git-check
-        run: echo ::set-output name=modified::$([ -z "`git status --porcelain`" ] && echo "false" || echo "true")
+        run: echo modified=$([ -z "`git status --porcelain`" ] && echo "false" || echo "true") >> "$GITHUB_ENV"
       - name: Commit latest release version
-        if: steps.git-check.outputs.modified == 'true'
+        if: env.modified == 'true'
         run: |
           sed -i -r 's#<Version>(.*)\.([[:digit:]]+)</Version>#echo "    <Version>\1\.$((\2+1))</Version>"#e' src/BundlerMinifier.Core/BundlerMinifier.Core.csproj
-          git commit -am "New version tracking new NUglify release"
+          git commit -am "New version tracking new NUglify release ${{ env.NUGLIFY }}"
           git push
