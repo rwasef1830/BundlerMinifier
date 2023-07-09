@@ -4,6 +4,7 @@
 
   <PropertyGroup>
     <Version>6.0.0</Version>
+    <PackageReadmeFile>../../README.md</PackageReadmeFile>
     <TargetFrameworks>netcoreapp3.1;net6.0;net7.0</TargetFrameworks>
     <DefineConstants>$(DefineConstants);DOTNET</DefineConstants>
     <AssemblyName>dotnet-bundle</AssemblyName>
@@ -30,6 +31,7 @@
       which may not be the version this tool is compiled against.
     -->
     <Content Include="prefercliruntime" Pack="true" PackagePath="\prefercliruntime" />
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
