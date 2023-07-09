@@ -10,6 +10,12 @@ namespace BundlerMinifier
 {
     public static class BundleMinifier
     {
+        #if NET7_0_OR_GREATER
+        const CompressionLevel c_CompressionLevel = CompressionLevel.SmallestSize;
+        #else
+        const CompressionLevel c_CompressionLevel = CompressionLevel.Optimal;
+        #endif
+        
         public static MinificationResult MinifyBundle(Bundle bundle)
         {
             string file = bundle.GetAbsoluteOutputFile();
@@ -123,7 +129,7 @@ namespace BundlerMinifier
 
                 Directory.CreateDirectory(Path.GetDirectoryName(minFile));
                 File.WriteAllText(minFile, minResult.MinifiedContent, new UTF8Encoding(false));
-                OnAfterWritingMinFile(minResult.FileName, minFile, bundle, containsChanges);
+                OnAfterWritingMinFile(minResult.FileName, minFile, bundle, true);
             }
             else
             {
@@ -145,7 +151,7 @@ namespace BundlerMinifier
                 minificationChanged,
                 minifiedContent,
                 "gz",
-                s => new GZipStream(s, CompressionLevel.Optimal));
+                s => new GZipStream(s, c_CompressionLevel));
         }
 
         static void BrotliFile(string sourceFile, Bundle bundle, bool minificationChanged, string minifiedContent)
@@ -156,7 +162,7 @@ namespace BundlerMinifier
                 minificationChanged,
                 minifiedContent,
                 "br",
-                s => new BrotliStream(s, CompressionLevel.Optimal));
+                s => new BrotliStream(s, c_CompressionLevel));
         }
 
         [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
@@ -192,7 +198,7 @@ namespace BundlerMinifier
                 compressorStream.Write(buffer, 0, buffer.Length);
             }
 
-            OnAfterWritingGzipFile(sourceFile, compressedFile, bundle, containsChanges);
+            OnAfterWritingGzipFile(sourceFile, compressedFile, bundle, true);
         }
 
         static void AddNUglifyErrors(UglifyResult minifier, MinificationResult minResult)
