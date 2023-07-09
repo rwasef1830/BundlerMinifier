@@ -1,0 +1,16 @@
+[
+  {
+    "outputFileName": "test12a.min.js",
+    "inputFiles": [
+      "test12b.min.js",
+      "file1.js"
+    ]
+  },
+  {
+    "outputFileName": "test12b.min.js",
+    "inputFiles": [
+      "test12a.min.js",
+      "file2.js"
+    ]
+  }
+]

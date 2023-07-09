@@ -73,6 +73,34 @@ namespace BundlerMinifier
                     bundle.MostRecentWrite = bundleFileInfo.LastWriteTimeUtc;
                 }
 
+                var bundlesByOutputPath = bundles.ToDictionary(x => x.OutputFileName, x => x);
+                var bundleOutputPathReferenceSet = new HashSet<string>();
+
+                foreach (var (_, bundle) in bundlesByOutputPath)
+                {
+                    bundleOutputPathReferenceSet.Clear();
+                    bundleOutputPathReferenceSet.Add(bundle.OutputFileName);
+                    
+                    for (int i = 0; i < bundle.InputFiles.Count; i++)
+                    {
+                        var inputFile = bundle.InputFiles[i];
+                        if (!bundlesByOutputPath.TryGetValue(inputFile, out var referencedBundle))
+                        {
+                            continue;
+                        }
+
+                        if (!bundleOutputPathReferenceSet.Add(inputFile))
+                        {
+                            // Circular reference
+                            return false;
+                        }
+                        
+                        bundle.InputFiles.RemoveAt(i);
+                        bundle.InputFiles.InsertRange(i, referencedBundle.InputFiles);
+                        i--;
+                    }
+                }
+
                 return true;
             }
             catch
@@ -84,7 +112,11 @@ namespace BundlerMinifier
 
         public static IEnumerable<Bundle> GetBundles(string configFile)
         {
-            TryGetBundles(configFile, out var bundles);
+            if (!TryGetBundles(configFile, out var bundles))
+            {
+                return Array.Empty<Bundle>();
+            }
+            
             return bundles;
         }
 

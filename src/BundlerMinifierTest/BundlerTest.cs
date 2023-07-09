@@ -10,6 +10,9 @@ namespace BundlerMinifierTest
     public class BundlerTest
     {
         const string c_TestBundle = "../../../artifacts/test1.json";
+        const string c_TestBundleRecursion = "../../../artifacts/test11.json";
+        const string c_TestBundleRecursionFails = "../../../artifacts/test12.json";
+        
         BundleFileProcessor _processor;
         Guid _guid;
 
@@ -64,6 +67,36 @@ namespace BundlerMinifierTest
         {
             var bundles = BundleHandler.GetBundles(c_TestBundle);
             Assert.AreEqual(4, bundles.Count());
+        }
+
+        [TestMethod]
+        public void GetBundles_Recursion()
+        {
+            var bundles = BundleHandler.GetBundles(c_TestBundleRecursion).ToList();
+            
+            var bundleA = bundles.Single(x => x.OutputFileName == "test11a.min.js");
+            Assert.AreEqual(1, bundleA.InputFiles.Count);
+            Assert.AreEqual("file1.js", bundleA.InputFiles[0]);
+            
+            var bundleB = bundles.Single(x => x.OutputFileName == "test11b.min.js");
+            Assert.AreEqual(2, bundleB.InputFiles.Count);
+            Assert.AreEqual("file1.js", bundleB.InputFiles[0]);
+            Assert.AreEqual("file2.js", bundleB.InputFiles[1]);
+            
+            var bundleC = bundles.Single(x => x.OutputFileName == "test11c.min.js");
+            Assert.AreEqual(3, bundleC.InputFiles.Count);
+            Assert.AreEqual("file3.js", bundleC.InputFiles[0]);
+            Assert.AreEqual("file1.js", bundleC.InputFiles[1]);
+            Assert.AreEqual("file2.js", bundleC.InputFiles[2]);
+            
+            Assert.AreEqual(3, bundles.Count);
+        }
+        
+        [TestMethod]
+        public void GetBundles_Recursion_Circular_Fails()
+        {
+            var bundles = BundleHandler.GetBundles(c_TestBundleRecursionFails).ToList();
+            Assert.AreEqual(0, bundles.Count);
         }
 
         [TestMethod]

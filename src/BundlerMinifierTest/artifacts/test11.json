@@ -1,0 +1,22 @@
+﻿[
+  {
+    "outputFileName": "test11a.min.js",
+    "inputFiles": [
+      "file1.js"
+    ]
+  },
+  {
+    "outputFileName": "test11b.min.js",
+    "inputFiles": [
+      "test11a.min.js",
+      "file2.js"
+    ]
+  },
+  {
+    "outputFileName": "test11c.min.js",
+    "inputFiles": [
+      "file3.js",
+      "test11b.min.js"
+    ]
+  }
+]
