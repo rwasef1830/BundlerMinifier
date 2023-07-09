@@ -5,276 +5,275 @@ using System.Linq;
 using System.Text;
 using JetBrains.Annotations;
 
-namespace BundlerMinifier
+namespace BundlerMinifier;
+
+[PublicAPI]
+public class BundleFileProcessor
 {
-    [PublicAPI]
-    public class BundleFileProcessor
+    static readonly string[] s_Supported = { ".JS", ".CSS", ".HTML", ".HTM" };
+
+    public static bool IsSupported(params string[] files)
     {
-        static readonly string[] s_Supported = { ".JS", ".CSS", ".HTML", ".HTM" };
+        files = files.Where(f => !string.IsNullOrEmpty(f)).ToArray();
 
-        public static bool IsSupported(params string[] files)
+        if (!files.Any())
         {
-            files = files.Where(f => !string.IsNullOrEmpty(f)).ToArray();
+            return false;
+        }
 
-            if (!files.Any())
+        string ext = Path.GetExtension(files.First())?.ToUpperInvariant();
+
+        foreach (string file in files)
+        {
+            string fileExt = Path.GetExtension(file).ToUpperInvariant();
+
+            if (!s_Supported.Contains(fileExt) || !fileExt.Equals(ext, StringComparison.OrdinalIgnoreCase))
             {
                 return false;
             }
+        }
 
-            string ext = Path.GetExtension(files.First())?.ToUpperInvariant();
+        return true;
+    }
 
-            foreach (string file in files)
+    public bool Process(string fileName, IEnumerable<Bundle> bundles = null)
+    {
+        var info = new FileInfo(fileName);
+        bundles ??= BundleHandler.GetBundles(fileName);
+        bool result = false;
+
+        foreach (var bundle in bundles)
+        {
+            result |= this.ProcessBundle(info.Directory?.FullName, bundle);
+        }
+
+        return result;
+    }
+
+    public static void Clean(string fileName, IEnumerable<Bundle> bundles = null)
+    {
+        var info = new FileInfo(fileName);
+        bundles ??= BundleHandler.GetBundles(fileName);
+
+        foreach (var bundle in bundles)
+        {
+            CleanBundle(info.Directory?.FullName, bundle);
+        }
+    }
+
+    public void SourceFileChanged(string bundleFile, string sourceFile)
+    {
+        var bundles = BundleHandler.GetBundles(bundleFile);
+        string bundleFileFolder = Path.GetDirectoryName(bundleFile),
+            sourceFileFolder = Path.GetDirectoryName(sourceFile);
+
+        foreach (var bundle in bundles)
+        {
+            foreach (string input in bundle.GetAbsoluteInputFiles())
             {
-                string fileExt = Path.GetExtension(file).ToUpperInvariant();
-
-                if (!s_Supported.Contains(fileExt) || !fileExt.Equals(ext, StringComparison.OrdinalIgnoreCase))
+                if (input.Equals(sourceFile, StringComparison.OrdinalIgnoreCase) || input.Equals(sourceFileFolder, StringComparison.OrdinalIgnoreCase))
                 {
-                    return false;
+                    this.ProcessBundle(bundleFileFolder, bundle);
                 }
             }
-
-            return true;
         }
+    }
 
-        public bool Process(string fileName, IEnumerable<Bundle> bundles = null)
+    public static IEnumerable<Bundle> IsFileConfigured(string configFile, string sourceFile)
+    {
+        List<Bundle> list = new List<Bundle>();
+
+        try
         {
-            var info = new FileInfo(fileName);
-            bundles ??= BundleHandler.GetBundles(fileName);
-            bool result = false;
+            var configs = BundleHandler.GetBundles(configFile);
 
-            foreach (var bundle in bundles)
-            {
-                result |= this.ProcessBundle(info.Directory?.FullName, bundle);
-            }
-
-            return result;
-        }
-
-        public static void Clean(string fileName, IEnumerable<Bundle> bundles = null)
-        {
-            var info = new FileInfo(fileName);
-            bundles ??= BundleHandler.GetBundles(fileName);
-
-            foreach (var bundle in bundles)
-            {
-                CleanBundle(info.Directory?.FullName, bundle);
-            }
-        }
-
-        public void SourceFileChanged(string bundleFile, string sourceFile)
-        {
-            var bundles = BundleHandler.GetBundles(bundleFile);
-            string bundleFileFolder = Path.GetDirectoryName(bundleFile),
-                   sourceFileFolder = Path.GetDirectoryName(sourceFile);
-
-            foreach (var bundle in bundles)
+            foreach (var bundle in configs)
             {
                 foreach (string input in bundle.GetAbsoluteInputFiles())
                 {
-                    if (input.Equals(sourceFile, StringComparison.OrdinalIgnoreCase) || input.Equals(sourceFileFolder, StringComparison.OrdinalIgnoreCase))
+                    if (input.Equals(sourceFile, StringComparison.OrdinalIgnoreCase) && !list.Contains(bundle))
                     {
-                        this.ProcessBundle(bundleFileFolder, bundle);
+                        list.Add(bundle);
                     }
+                }
+            }
+
+            return list;
+        }
+        catch (Exception)
+        {
+            return list;
+        }
+    }
+
+    bool ProcessBundle(string baseFolder, Bundle bundle)
+    {
+        this.OnProcessing(bundle, baseFolder);
+        bool changed = false;
+
+        if (bundle.GetAbsoluteInputFiles(true).Count > 1 || bundle.InputFiles.FirstOrDefault() != bundle.OutputFileName)
+        {
+            BundleHandler.ProcessBundle(baseFolder, bundle);
+
+            if (!bundle.IsMinificationEnabled || !bundle.OutputIsMinFile)
+            {
+                string outputFile = bundle.GetAbsoluteOutputFile();
+                bool containsChanges = FileHelpers.HasFileContentChanged(outputFile, bundle.Output);
+
+                if (containsChanges)
+                {
+                    this.OnBeforeBundling(bundle, baseFolder, true);
+                    var outputFileDirectory = Directory.GetParent(outputFile);
+                    outputFileDirectory.Create();
+
+                    File.WriteAllText(outputFile, bundle.Output, new UTF8Encoding(false));
+                    this.OnAfterBundling(bundle, baseFolder, true);
+                    changed = true;
                 }
             }
         }
 
-        public static IEnumerable<Bundle> IsFileConfigured(string configFile, string sourceFile)
+        MinificationResult minResult = null;
+        var minFile = BundleMinifier.GetMinFileName(bundle.GetAbsoluteOutputFile());
+        if (bundle.IsMinificationEnabled)
         {
-            List<Bundle> list = new List<Bundle>();
+            var outputWriteTime = File.GetLastWriteTimeUtc(minFile);
+            var minifyChanged = bundle.MostRecentWrite >= outputWriteTime;
 
-            try
+            if (minifyChanged)
             {
-                var configs = BundleHandler.GetBundles(configFile);
+                minResult = BundleMinifier.MinifyBundle(bundle);
 
-                foreach (var bundle in configs)
+                // If no change is detected, then the minFile is not modified, so we need to update the write time manually
+                if (!minResult.Changed && File.Exists(minFile))
                 {
-                    foreach (string input in bundle.GetAbsoluteInputFiles())
-                    {
-                        if (input.Equals(sourceFile, StringComparison.OrdinalIgnoreCase) && !list.Contains(bundle))
-                        {
-                            list.Add(bundle);
-                        }
-                    }
+                    File.SetLastWriteTimeUtc(minFile, DateTime.UtcNow);
                 }
 
-                return list;
-            }
-            catch (Exception)
-            {
-                return list;
-            }
-        }
+                changed |= minResult.Changed;
 
-        bool ProcessBundle(string baseFolder, Bundle bundle)
-        {
-            this.OnProcessing(bundle, baseFolder);
-            bool changed = false;
-
-            if (bundle.GetAbsoluteInputFiles(true).Count > 1 || bundle.InputFiles.FirstOrDefault() != bundle.OutputFileName)
-            {
-                BundleHandler.ProcessBundle(baseFolder, bundle);
-
-                if (!bundle.IsMinificationEnabled || !bundle.OutputIsMinFile)
+                if (bundle.SourceMap && !string.IsNullOrEmpty(minResult.SourceMap))
                 {
-                    string outputFile = bundle.GetAbsoluteOutputFile();
-                    bool containsChanges = FileHelpers.HasFileContentChanged(outputFile, bundle.Output);
+                    string mapFile = minFile + ".map";
+                    bool smChanges = FileHelpers.HasFileContentChanged(mapFile, minResult.SourceMap);
 
-                    if (containsChanges)
+                    if (smChanges)
                     {
-                        this.OnBeforeBundling(bundle, baseFolder, true);
-                        var outputFileDirectory = Directory.GetParent(outputFile);
-                        outputFileDirectory.Create();
-
-                        File.WriteAllText(outputFile, bundle.Output, new UTF8Encoding(false));
-                        this.OnAfterBundling(bundle, baseFolder, true);
+                        this.OnBeforeWritingSourceMap(minFile, mapFile, true);
+                        File.WriteAllText(mapFile, minResult.SourceMap, new UTF8Encoding(false));
+                        this.OnAfterWritingSourceMap(minFile, mapFile, true);
                         changed = true;
                     }
                 }
             }
-
-            MinificationResult minResult = null;
-            var minFile = BundleMinifier.GetMinFileName(bundle.GetAbsoluteOutputFile());
-            if (bundle.IsMinificationEnabled)
-            {
-                var outputWriteTime = File.GetLastWriteTimeUtc(minFile);
-                var minifyChanged = bundle.MostRecentWrite >= outputWriteTime;
-
-                if (minifyChanged)
-                {
-                    minResult = BundleMinifier.MinifyBundle(bundle);
-
-                    // If no change is detected, then the minFile is not modified, so we need to update the write time manually
-                    if (!minResult.Changed && File.Exists(minFile))
-                    {
-                        File.SetLastWriteTimeUtc(minFile, DateTime.UtcNow);
-                    }
-
-                    changed |= minResult.Changed;
-
-                    if (bundle.SourceMap && !string.IsNullOrEmpty(minResult.SourceMap))
-                    {
-                        string mapFile = minFile + ".map";
-                        bool smChanges = FileHelpers.HasFileContentChanged(mapFile, minResult.SourceMap);
-
-                        if (smChanges)
-                        {
-                            this.OnBeforeWritingSourceMap(minFile, mapFile, true);
-                            File.WriteAllText(mapFile, minResult.SourceMap, new UTF8Encoding(false));
-                            this.OnAfterWritingSourceMap(minFile, mapFile, true);
-                            changed = true;
-                        }
-                    }
-                }
-                else
-                {
-                    this.OnMinificationSkipped(bundle, baseFolder, false);
-                }
-            }
-
-            if (minResult?.HasErrors ?? false)
-            {
-                throw new Exception("Minification failed.");
-            }
-
-            if (!bundle.IsGzipEnabled)
-            {
-                return changed;
-            }
-
-            var fileToGzip = bundle.IsMinificationEnabled ? minFile : bundle.GetAbsoluteOutputFile();
-
-            if (minResult == null)
-            {
-                BundleMinifier.CompressFile(fileToGzip, bundle, false, File.ReadAllText(fileToGzip));
-            }
             else
             {
-                BundleMinifier.CompressFile(fileToGzip, bundle, minResult.Changed, minResult.MinifiedContent);
+                this.OnMinificationSkipped(bundle, baseFolder, false);
             }
+        }
 
+        if (minResult?.HasErrors ?? false)
+        {
+            throw new Exception("Minification failed.");
+        }
+
+        if (!bundle.IsGzipEnabled)
+        {
             return changed;
         }
 
-        static void CleanBundle(string baseFolder, Bundle bundle)
+        var fileToGzip = bundle.IsMinificationEnabled ? minFile : bundle.GetAbsoluteOutputFile();
+
+        if (minResult == null)
         {
-            string outputFile = bundle.GetAbsoluteOutputFile();
-            baseFolder = baseFolder.DemandTrailingPathSeparatorChar();
-            if (!bundle.GetAbsoluteInputFiles().Contains(outputFile, StringComparer.OrdinalIgnoreCase))
-            {
-                if (File.Exists(outputFile))
-                {
-                    FileHelpers.RemoveReadonlyFlagFromFile(outputFile);
-                    File.Delete(outputFile);
-                    Console.WriteLine($"Deleted {FileHelpers.MakeRelative(baseFolder, outputFile).Cyan().Bright()}");
-                }
-            }
-
-            string minFile = BundleMinifier.GetMinFileName(bundle.GetAbsoluteOutputFile());
-            string mapFile = minFile + ".map";
-            string gzFile = minFile + ".gz";
-
-            if (File.Exists(minFile))
-            {
-                FileHelpers.RemoveReadonlyFlagFromFile(minFile);
-                File.Delete(minFile);
-                Console.WriteLine($"Deleted {FileHelpers.MakeRelative(baseFolder, minFile).Cyan().Bright()}");
-            }
-
-            if (File.Exists(mapFile))
-            {
-                FileHelpers.RemoveReadonlyFlagFromFile(mapFile);
-                File.Delete(mapFile);
-                Console.WriteLine($"Deleted {mapFile.Cyan().Bright()}");
-            }
-
-            if (!File.Exists(gzFile))
-            {
-                return;
-            }
-
-            FileHelpers.RemoveReadonlyFlagFromFile(gzFile);
-            File.Delete(gzFile);
-            Console.WriteLine($"Deleted {gzFile.Cyan().Bright()}");
+            BundleMinifier.CompressFile(fileToGzip, bundle, false, File.ReadAllText(fileToGzip));
+        }
+        else
+        {
+            BundleMinifier.CompressFile(fileToGzip, bundle, minResult.Changed, minResult.MinifiedContent);
         }
 
-        public event EventHandler<BundleFileEventArgs> Processing;
-        protected void OnProcessing(Bundle bundle, string baseFolder)
-        {
-            this.Processing?.Invoke(this, new BundleFileEventArgs(bundle.GetAbsoluteOutputFile(), bundle, baseFolder, false));
-        }
-
-        public event EventHandler<BundleFileEventArgs> BeforeBundling;
-        protected void OnBeforeBundling(Bundle bundle, string baseFolder, bool containsChanges)
-        {
-            this.BeforeBundling?.Invoke(this, new BundleFileEventArgs(bundle.GetAbsoluteOutputFile(), bundle, baseFolder, containsChanges));
-        }
-
-
-        public event EventHandler<BundleFileEventArgs> AfterBundling;
-        protected void OnAfterBundling(Bundle bundle, string baseFolder, bool containsChanges)
-        {
-            this.AfterBundling?.Invoke(this, new BundleFileEventArgs(bundle.GetAbsoluteOutputFile(), bundle, baseFolder, containsChanges));
-        }
-
-        public event EventHandler<MinifyFileEventArgs> BeforeWritingSourceMap;
-        protected void OnBeforeWritingSourceMap(string file, string mapFile, bool containsChanges)
-        {
-            this.BeforeWritingSourceMap?.Invoke(this, new MinifyFileEventArgs(file, mapFile, containsChanges));
-        }
-
-        public event EventHandler<MinifyFileEventArgs> AfterWritingSourceMap;
-        protected void OnAfterWritingSourceMap(string file, string mapFile, bool containsChanges)
-        {
-            this.AfterWritingSourceMap?.Invoke(this, new MinifyFileEventArgs(file, mapFile, containsChanges));
-        }
-
-        public event EventHandler<BundleFileEventArgs> MinificationSkipped;
-        protected void OnMinificationSkipped(Bundle bundle, string baseFolder, bool containsChanges)
-        {
-            this.MinificationSkipped?.Invoke(this, new BundleFileEventArgs(bundle.GetAbsoluteOutputFile(), bundle, baseFolder, containsChanges));
-        }
-
-
+        return changed;
     }
+
+    static void CleanBundle(string baseFolder, Bundle bundle)
+    {
+        string outputFile = bundle.GetAbsoluteOutputFile();
+        baseFolder = baseFolder.DemandTrailingPathSeparatorChar();
+        if (!bundle.GetAbsoluteInputFiles().Contains(outputFile, StringComparer.OrdinalIgnoreCase))
+        {
+            if (File.Exists(outputFile))
+            {
+                FileHelpers.RemoveReadonlyFlagFromFile(outputFile);
+                File.Delete(outputFile);
+                Console.WriteLine($"Deleted {FileHelpers.MakeRelative(baseFolder, outputFile).Cyan().Bright()}");
+            }
+        }
+
+        string minFile = BundleMinifier.GetMinFileName(bundle.GetAbsoluteOutputFile());
+        string mapFile = minFile + ".map";
+        string gzFile = minFile + ".gz";
+
+        if (File.Exists(minFile))
+        {
+            FileHelpers.RemoveReadonlyFlagFromFile(minFile);
+            File.Delete(minFile);
+            Console.WriteLine($"Deleted {FileHelpers.MakeRelative(baseFolder, minFile).Cyan().Bright()}");
+        }
+
+        if (File.Exists(mapFile))
+        {
+            FileHelpers.RemoveReadonlyFlagFromFile(mapFile);
+            File.Delete(mapFile);
+            Console.WriteLine($"Deleted {mapFile.Cyan().Bright()}");
+        }
+
+        if (!File.Exists(gzFile))
+        {
+            return;
+        }
+
+        FileHelpers.RemoveReadonlyFlagFromFile(gzFile);
+        File.Delete(gzFile);
+        Console.WriteLine($"Deleted {gzFile.Cyan().Bright()}");
+    }
+
+    public event EventHandler<BundleFileEventArgs> Processing;
+    protected void OnProcessing(Bundle bundle, string baseFolder)
+    {
+        this.Processing?.Invoke(this, new BundleFileEventArgs(bundle.GetAbsoluteOutputFile(), bundle, baseFolder, false));
+    }
+
+    public event EventHandler<BundleFileEventArgs> BeforeBundling;
+    protected void OnBeforeBundling(Bundle bundle, string baseFolder, bool containsChanges)
+    {
+        this.BeforeBundling?.Invoke(this, new BundleFileEventArgs(bundle.GetAbsoluteOutputFile(), bundle, baseFolder, containsChanges));
+    }
+
+
+    public event EventHandler<BundleFileEventArgs> AfterBundling;
+    protected void OnAfterBundling(Bundle bundle, string baseFolder, bool containsChanges)
+    {
+        this.AfterBundling?.Invoke(this, new BundleFileEventArgs(bundle.GetAbsoluteOutputFile(), bundle, baseFolder, containsChanges));
+    }
+
+    public event EventHandler<MinifyFileEventArgs> BeforeWritingSourceMap;
+    protected void OnBeforeWritingSourceMap(string file, string mapFile, bool containsChanges)
+    {
+        this.BeforeWritingSourceMap?.Invoke(this, new MinifyFileEventArgs(file, mapFile, containsChanges));
+    }
+
+    public event EventHandler<MinifyFileEventArgs> AfterWritingSourceMap;
+    protected void OnAfterWritingSourceMap(string file, string mapFile, bool containsChanges)
+    {
+        this.AfterWritingSourceMap?.Invoke(this, new MinifyFileEventArgs(file, mapFile, containsChanges));
+    }
+
+    public event EventHandler<BundleFileEventArgs> MinificationSkipped;
+    protected void OnMinificationSkipped(Bundle bundle, string baseFolder, bool containsChanges)
+    {
+        this.MinificationSkipped?.Invoke(this, new BundleFileEventArgs(bundle.GetAbsoluteOutputFile(), bundle, baseFolder, containsChanges));
+    }
+
+
 }

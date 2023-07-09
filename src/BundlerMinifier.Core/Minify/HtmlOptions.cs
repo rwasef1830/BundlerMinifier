@@ -1,49 +1,48 @@
 ﻿using Newtonsoft.Json.Linq;
 using NUglify.Html;
 
-namespace BundlerMinifier
+namespace BundlerMinifier;
+
+static class HtmlOptions
 {
-    static class HtmlOptions
+    public static HtmlSettings GetSettings(Bundle bundle)
     {
-        public static HtmlSettings GetSettings(Bundle bundle)
+        var settings = new HtmlSettings
         {
-            var settings = new HtmlSettings
-            {
-                RemoveOptionalTags = GetValue(bundle, "removeOptionalEndTags") == "True",
-                ShortBooleanAttribute = GetValue(bundle, "collapseBooleanAttributes", true) == "True",
-                MinifyCss = GetValue(bundle, "minifyEmbeddedCssCode", true) == "True",
-                MinifyJs = GetValue(bundle, "minifyEmbeddedJsCode", true) == "True",
-                MinifyCssAttributes = GetValue(bundle, "minifyInlineCssCode", false) == "True",
-                AttributesCaseSensitive = GetValue(bundle, "preserveCase") == "True",
-                RemoveComments = GetValue(bundle, "removeHtmlComments", true) == "True",
-                RemoveAttributeQuotes = GetValue(bundle, "removeQuotedAttributes", true) == "True",
-                CollapseWhitespaces = GetValue(bundle, "collapseWhitespace", true) == "True",
-                IsFragmentOnly = GetValue(bundle, "isFragmentOnly", true) == "True",
-                KeepOneSpaceWhenCollapsing = GetValue(bundle, "keepOneSpaceWhenCollapsing", false) == "True",
-                DecodeEntityCharacters = GetValue(bundle, "decodeEntityCharacters", true) == "True"
-            };
+            RemoveOptionalTags = GetValue(bundle, "removeOptionalEndTags") == "True",
+            ShortBooleanAttribute = GetValue(bundle, "collapseBooleanAttributes", true) == "True",
+            MinifyCss = GetValue(bundle, "minifyEmbeddedCssCode", true) == "True",
+            MinifyJs = GetValue(bundle, "minifyEmbeddedJsCode", true) == "True",
+            MinifyCssAttributes = GetValue(bundle, "minifyInlineCssCode", false) == "True",
+            AttributesCaseSensitive = GetValue(bundle, "preserveCase") == "True",
+            RemoveComments = GetValue(bundle, "removeHtmlComments", true) == "True",
+            RemoveAttributeQuotes = GetValue(bundle, "removeQuotedAttributes", true) == "True",
+            CollapseWhitespaces = GetValue(bundle, "collapseWhitespace", true) == "True",
+            IsFragmentOnly = GetValue(bundle, "isFragmentOnly", true) == "True",
+            KeepOneSpaceWhenCollapsing = GetValue(bundle, "keepOneSpaceWhenCollapsing", false) == "True",
+            DecodeEntityCharacters = GetValue(bundle, "decodeEntityCharacters", true) == "True"
+        };
 
-            return settings;
-        }
+        return settings;
+    }
 
-        internal static string GetValue(Bundle bundle, string key, object defaultValue = null)
+    internal static string GetValue(Bundle bundle, string key, object defaultValue = null)
+    {
+        if (bundle.Minify.TryGetValue(key, out var value))
         {
-            if (bundle.Minify.TryGetValue(key, out var value))
+            if (value is JArray array)
             {
-                if (value is JArray array)
-                {
-                    return string.Join(",", array.Values<string>());
-                }
-
-                return value.ToString();
+                return string.Join(",", array.Values<string>());
             }
 
-            if (defaultValue != null)
-            {
-                return defaultValue.ToString();
-            }
-
-            return string.Empty;
+            return value.ToString();
         }
+
+        if (defaultValue != null)
+        {
+            return defaultValue.ToString();
+        }
+
+        return string.Empty;
     }
 }
