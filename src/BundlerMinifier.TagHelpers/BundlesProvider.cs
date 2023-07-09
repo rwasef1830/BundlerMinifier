@@ -17,7 +17,6 @@ namespace BundlerMinifier.TagHelpers
         IList<Bundle> _bundles;
         FileSystemWatcher _fileWatcher;
 
-
         public BundleProvider() : this(null)
         {
         }
