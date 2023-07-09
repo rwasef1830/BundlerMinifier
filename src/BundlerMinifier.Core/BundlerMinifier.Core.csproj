@@ -4,7 +4,7 @@
 
   <PropertyGroup>
     <Version>6.0.1</Version>
-    <PackageReadmeFile>../../README.md</PackageReadmeFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <TargetFrameworks>netcoreapp3.1;net6.0;net7.0</TargetFrameworks>
     <DefineConstants>$(DefineConstants);DOTNET</DefineConstants>
     <AssemblyName>dotnet-bundle</AssemblyName>
