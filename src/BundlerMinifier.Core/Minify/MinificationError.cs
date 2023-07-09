@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BundlerMinifier
+﻿namespace BundlerMinifier
 {
     /// <summary>
     /// Represents an error that occured in the compiler.
@@ -42,7 +36,7 @@ namespace BundlerMinifier
         /// <returns></returns>
         public override string ToString()
         {
-            return $"{ErrorCode}: {FileName}: Line {LineNumber}, Column: {ColumnNumber}: {Message}";
+            return $"{this.ErrorCode}: {this.FileName}: Line {this.LineNumber}, Column: {this.ColumnNumber}: {this.Message}";
         }
     }
 }

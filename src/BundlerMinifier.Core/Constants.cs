@@ -1,7 +1,7 @@
 ﻿namespace BundlerMinifier
 {
-    public class Constants
+    public abstract class Constants
     {
-        public const string VERSION = "1.0.21";
+        public const string Version = "2.0.0";
     }
 }

@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using Minimatch;
 using Newtonsoft.Json;
-using System;
 
 namespace BundlerMinifier
 {
@@ -32,27 +33,16 @@ namespace BundlerMinifier
 
         internal string Output { get; set; }
 
-        internal bool IsMinificationEnabled
-        {
-            get
-            {
-                return Minify.ContainsKey("enabled") && Minify["enabled"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase);
-            }
-        }
+        internal bool IsMinificationEnabled => this.Minify.ContainsKey("enabled") &&
+                                               this.Minify["enabled"]?.ToString()?.Equals("true",
+                                                   StringComparison.OrdinalIgnoreCase) == true;
 
-        internal bool IsGzipEnabled
-        {
-            get
-            {
-                return Minify.ContainsKey("gzip") && Minify["gzip"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase);
-            }
-        }
+        internal bool IsGzipEnabled => this.Minify.ContainsKey("gzip") &&
+                                       this.Minify["gzip"]?.ToString()?.Equals(
+                                           "true", StringComparison.OrdinalIgnoreCase) == true;
 
         [JsonIgnore]
-        public bool OutputIsMinFile
-        {
-            get { return Path.GetFileName(OutputFileName).Contains(".min."); }
-        }
+        public bool OutputIsMinFile => Path.GetFileName(this.OutputFileName)?.Contains(".min.") == true;
 
         public DateTime MostRecentWrite { get; set; }
 
@@ -61,26 +51,29 @@ namespace BundlerMinifier
         /// </summary>
         public string GetAbsoluteOutputFile()
         {
-            string folder = new FileInfo(FileName).DirectoryName;
-            return Path.Combine(folder, OutputFileName.NormalizePath());
+            string folder = new FileInfo(this.FileName).DirectoryName ?? string.Empty;
+            return Path.Combine(folder, this.OutputFileName.NormalizePath());
         }
 
         /// <summary>
         /// Returns a list of absolute file paths of all matching input files.
         /// </summary>
         /// <param name="notifyOnPatternMiss">Writes to the Console if any input file is missing on disk.</param>
+        [SuppressMessage("ReSharper", "HeapView.ClosureAllocation")]
         public List<string> GetAbsoluteInputFiles(bool notifyOnPatternMiss = false)
         {
             List<string> files = new List<string>();
 
-            if (!InputFiles.Any())
+            if (!this.InputFiles.Any())
+            {
                 return files;
+            }
 
-            string folder = new DirectoryInfo(Path.GetDirectoryName(FileName)).FullName;
-            string ext = Path.GetExtension(InputFiles.First());
-            Options options = new Options { AllowWindowsPaths = true };
+            string folder = new DirectoryInfo(Path.GetDirectoryName(this.FileName) ?? string.Empty).FullName;
+            string ext = Path.GetExtension(this.InputFiles.First());
+            var options = new Options { AllowWindowsPaths = true };
 
-            foreach (string inputFile in InputFiles.Where(f => !f.StartsWith("!", StringComparison.Ordinal)))
+            foreach (string inputFile in this.InputFiles.Where(f => !f.StartsWith("!", StringComparison.Ordinal)))
             {
                 int globIndex = inputFile.IndexOf('*');
 
@@ -90,13 +83,16 @@ namespace BundlerMinifier
                     int last = inputFile.LastIndexOf('/', globIndex);
 
                     if (last > -1)
-                        relative = inputFile.Substring(0, last + 1);
+                    {
+                        relative = inputFile[..(last + 1)];
+                    }
 
-                    var output = GetAbsoluteOutputFile();
+                    var output = this.GetAbsoluteOutputFile();
                     var outputMin = BundleMinifier.GetMinFileName(output);
 
                     string searchDir = new FileInfo(Path.Combine(folder, relative).NormalizePath()).FullName;
-                    var allFiles = Directory.EnumerateFiles(searchDir, "*" + ext, SearchOption.AllDirectories).Select(f => f.Replace(folder + FileHelpers.PathSeparatorChar, ""));
+                    var allFiles = Directory.EnumerateFiles(searchDir, "*" + ext, SearchOption.AllDirectories)
+                        .Select(f => f.Replace(folder + FileHelpers.PathSeparatorChar, ""));
 
                     var matches = Minimatcher.Filter(allFiles, inputFile, options).Select(f => Path.Combine(folder, f));
                     matches = matches.Where(match => match != output && match != outputMin).ToList();
@@ -114,9 +110,9 @@ namespace BundlerMinifier
 
                     if (Directory.Exists(fullPath))
                     {
-                        DirectoryInfo dir = new DirectoryInfo(fullPath);
-                        SearchOption search = SearchOption.TopDirectoryOnly;
-                        var dirFiles = dir.GetFiles("*" + Path.GetExtension(OutputFileName), search);
+                        var dir = new DirectoryInfo(fullPath);
+                        const SearchOption search = SearchOption.TopDirectoryOnly;
+                        var dirFiles = dir.GetFiles("*" + Path.GetExtension(this.OutputFileName), search);
                         var collected = dirFiles.Select(f => f.FullName).Where(f => !files.Contains(f)).ToList();
 
                         if (notifyOnPatternMiss && collected.Count == 0)
@@ -130,26 +126,30 @@ namespace BundlerMinifier
                     {
                         files.Add(fullPath);
 
-                        if (notifyOnPatternMiss && !File.Exists(fullPath))
+                        if (!notifyOnPatternMiss || File.Exists(fullPath))
                         {
-                            Console.WriteLine($"  {inputFile} was not found".Orange().Bright());
-                            throw new FileNotFoundException(inputFile);
+                            continue;
                         }
+
+                        Console.WriteLine($"  {inputFile} was not found".Orange().Bright());
+                        throw new FileNotFoundException(inputFile);
                     }
                 }
             }
 
             // Remove files starting with a !
-            foreach (string inputFile in InputFiles)
+            foreach (string inputFile in this.InputFiles)
             {
                 int globIndex = inputFile.IndexOf('!');
 
-                if (globIndex == 0)
+                if (globIndex != 0)
                 {
-                    var allFiles = files.Select(f => f.Replace(folder + FileHelpers.PathSeparatorChar, ""));
-                    var matches = Minimatcher.Filter(allFiles, inputFile, options).Select(f => Path.Combine(folder, f));
-                    files = matches.ToList();
+                    continue;
                 }
+
+                var allFiles = files.Select(f => f.Replace(folder + FileHelpers.PathSeparatorChar, ""));
+                var matches = Minimatcher.Filter(allFiles, inputFile, options).Select(f => Path.Combine(folder, f));
+                files = matches.ToList();
             }
 
             return files;
@@ -157,49 +157,80 @@ namespace BundlerMinifier
 
         public override bool Equals(object obj)
         {
-            if (obj == null) return false;
-            if (obj.GetType() != GetType()) return false;
-            if (obj == this) return true;
+            if (obj == null)
+            {
+                return false;
+            }
 
-            Bundle other = (Bundle)obj;
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
 
-            return GetHashCode() == other.GetHashCode();
+            if (obj == this)
+            {
+                return true;
+            }
+
+            var other = (Bundle)obj;
+
+            return this.GetHashCode() == other.GetHashCode();
         }
 
+        [SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode")]
         public override int GetHashCode()
         {
-            return OutputFileName.GetHashCode();
+            return this.OutputFileName?.GetHashCode() ?? 0;
         }
 
         /// <summary>For the JSON.NET serializer</summary>
         public bool ShouldSerializeIncludeInProject()
         {
-            Bundle config = new Bundle();
-            return IncludeInProject != config.IncludeInProject;
+            var config = new Bundle();
+            return this.IncludeInProject != config.IncludeInProject;
         }
 
         /// <summary>For the JSON.NET serializer</summary>
         public bool ShouldSerializeMinify()
         {
-            Bundle config = new Bundle();
-            return !DictionaryEqual(Minify, config.Minify, null);
+            var config = new Bundle();
+            return !DictionaryEqual(this.Minify, config.Minify, null);
         }
 
-        private static bool DictionaryEqual<TKey, TValue>(
+        static bool DictionaryEqual<TKey, TValue>(
             IDictionary<TKey, TValue> first, IDictionary<TKey, TValue> second,
             IEqualityComparer<TValue> valueComparer)
         {
-            if (first == second) return true;
-            if ((first == null) || (second == null)) return false;
-            if (first.Count != second.Count) return false;
+            if (first == second)
+            {
+                return true;
+            }
 
-            valueComparer = valueComparer ?? EqualityComparer<TValue>.Default;
+            if (first == null || second == null)
+            {
+                return false;
+            }
+
+            if (first.Count != second.Count)
+            {
+                return false;
+            }
+
+            valueComparer ??= EqualityComparer<TValue>.Default;
 
             foreach (var kvp in first)
             {
-                if (!second.TryGetValue(kvp.Key, out var secondValue)) return false;
-                if (!valueComparer.Equals(kvp.Value, secondValue)) return false;
+                if (!second.TryGetValue(kvp.Key, out var secondValue))
+                {
+                    return false;
+                }
+
+                if (!valueComparer.Equals(kvp.Value, secondValue))
+                {
+                    return false;
+                }
             }
+
             return true;
         }
     }

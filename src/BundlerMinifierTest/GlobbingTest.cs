@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using BundlerMinifier;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -9,14 +8,13 @@ namespace BundlerMinifierTest
     [TestClass]
     public class GlobbingTest
     {
-        private BundleFileProcessor _processor;
-        private Guid _guid;
+        BundleFileProcessor _processor;
 
         [TestInitialize]
         public void Setup()
         {
-            _processor = new BundleFileProcessor();
-            _guid = Guid.NewGuid();
+            this._processor = new BundleFileProcessor();
+            Guid.NewGuid();
         }
 
         [TestCleanup]
@@ -31,7 +29,7 @@ namespace BundlerMinifierTest
         [TestMethod, TestCategory("Globbing")]
         public void OneFolder()
         {
-            _processor.Process("../../../artifacts/globbingOneFolder.json");
+            this._processor.Process("../../../artifacts/globbingOneFolder.json");
 
             string out1 = File.ReadAllText(new FileInfo("../../../artifacts/globbing/out1.js").FullName);
             Assert.AreEqual(out1, "var a = 1;");
@@ -43,7 +41,7 @@ namespace BundlerMinifierTest
         [TestMethod, TestCategory("Globbing")]
         public void Subfolders()
         {
-            _processor.Process("../../../artifacts/globbingSubFolders.json");
+            this._processor.Process("../../../artifacts/globbingSubFolders.json");
 
             string out2 = File.ReadAllText(new FileInfo("../../../artifacts/globbing/out2.js").FullName);
             Assert.AreEqual(out2, "var a = 1;\r\nvar b = 2;");
@@ -55,8 +53,8 @@ namespace BundlerMinifierTest
         [TestMethod, TestCategory("Globbing")]
         public void DontBundleOutputFile()
         {
-            _processor.Process("../../../artifacts/globbingSubFolders.json");
-            _processor.Process("../../../artifacts/globbingSubFolders.json");
+            this._processor.Process("../../../artifacts/globbingSubFolders.json");
+            this._processor.Process("../../../artifacts/globbingSubFolders.json");
 
             string out2 = File.ReadAllText(new FileInfo("../../../artifacts/globbing/out2.js").FullName);
             Assert.AreEqual(out2, "var a = 1;\r\nvar b = 2;");

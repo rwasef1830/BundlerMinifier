@@ -7,45 +7,49 @@ namespace BundlerMinifier
     {
         public static CssSettings GetSettings(Bundle bundle)
         {
-            CssSettings settings = new CssSettings();
-            settings.TermSemicolons = GetValue(bundle, "termSemicolons") == "True";
-            settings.DecodeEscapes = GetValue(bundle, "decodeEscapes", "True") == "True";
+            var settings = new CssSettings
+            {
+                TermSemicolons = GetValue(bundle, "termSemicolons") == "True",
+                DecodeEscapes = GetValue(bundle, "decodeEscapes", "True") == "True"
+            };
 
             string cssComment = GetValue(bundle, "commentMode");
 
-            if (cssComment == "hacks")
-                settings.CommentMode = CssComment.Hacks;
-            else if (cssComment == "important")
-                settings.CommentMode = CssComment.Important;
-            else if (cssComment == "none")
-                settings.CommentMode = CssComment.None;
-            else if (cssComment == "all")
-                settings.CommentMode = CssComment.All;
+            settings.CommentMode = cssComment switch
+            {
+                "hacks" => CssComment.Hacks,
+                "important" => CssComment.Important,
+                "none" => CssComment.None,
+                "all" => CssComment.All,
+                _ => settings.CommentMode
+            };
 
             string colorNames = GetValue(bundle, "colorNames");
 
-            if (colorNames == "hex")
-                settings.ColorNames = CssColor.Hex;
-            else if (colorNames == "major")
-                settings.ColorNames = CssColor.Major;
-            else if (colorNames == "noSwap")
-                settings.ColorNames = CssColor.NoSwap;
-            else if (colorNames == "strict")
-                settings.ColorNames = CssColor.Strict;
+            settings.ColorNames = colorNames switch
+            {
+                "hex" => CssColor.Hex,
+                "major" => CssColor.Major,
+                "noSwap" => CssColor.NoSwap,
+                "strict" => CssColor.Strict,
+                _ => settings.ColorNames
+            };
 
             string outputMode = GetValue(bundle, "outputMode", "singleLine");
 
-            if (outputMode == "multipleLines")
-                settings.OutputMode = OutputMode.MultipleLines;
-            else if (outputMode == "singleLine")
-                settings.OutputMode = OutputMode.SingleLine;
-            else if (outputMode == "none")
-                settings.OutputMode = OutputMode.None;
+            settings.OutputMode = outputMode switch
+            {
+                "multipleLines" => OutputMode.MultipleLines,
+                "singleLine" => OutputMode.SingleLine,
+                "none" => OutputMode.None,
+                _ => settings.OutputMode
+            };
 
             string indentSize = GetValue(bundle, "indentSize", 2);
-            int size;
-            if (int.TryParse(indentSize, out size))
+            if (int.TryParse(indentSize, out var size))
+            {
                 settings.Indent = new string(' ', size);
+            }
 
             settings.IgnoreErrorList = GetValue(bundle, "ignoreErrorList", "");
 
@@ -59,11 +63,15 @@ namespace BundlerMinifier
 
         internal static string GetValue(Bundle bundle, string key, object defaultValue = null)
         {
-            if (bundle.Minify.ContainsKey(key))
-                return bundle.Minify[key].ToString();
+            if (bundle.Minify.TryGetValue(key, out var value))
+            {
+                return value.ToString();
+            }
 
             if (defaultValue != null)
+            {
                 return defaultValue.ToString();
+            }
 
             return string.Empty;
         }

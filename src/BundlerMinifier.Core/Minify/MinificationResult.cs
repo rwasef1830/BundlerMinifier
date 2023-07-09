@@ -1,14 +1,16 @@
 ﻿using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace BundlerMinifier
 {
+    [PublicAPI]
     public class MinificationResult
     {
         public MinificationResult(string fileName, string content, string sourceMap)
         {
-            FileName = fileName;
-            MinifiedContent = content;
-            SourceMap = sourceMap;
+            this.FileName = fileName;
+            this.MinifiedContent = content;
+            this.SourceMap = sourceMap;
         }
 
         public string FileName { get; set; }
@@ -28,10 +30,7 @@ namespace BundlerMinifier
         /// <summary>
         /// Checks if the compilation resulted in errors.
         /// </summary>
-        public bool HasErrors
-        {
-            get { return Errors.Count > 0; }
-        }
+        public bool HasErrors => this.Errors.Count > 0;
 
         public bool Changed { get; set; }
     }

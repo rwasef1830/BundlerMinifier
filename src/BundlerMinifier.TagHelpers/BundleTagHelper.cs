@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Encodings.Web;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Html;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -15,23 +16,40 @@ using IWebHostEnvironment = Microsoft.AspNetCore.Hosting.IHostingEnvironment;
 
 namespace BundlerMinifier.TagHelpers
 {
+    [PublicAPI]
     [HtmlTargetElement("bundle")]
     public class BundleTagHelper : TagHelper
     {
-        private readonly IBundleProvider _bundleProvider;
-        private readonly BundleOptions _options;
-        private readonly IWebHostEnvironment _hostingEnvironment;
-        private readonly IMemoryCache _cache;
-        private readonly HtmlEncoder _htmlEncoder;
-        private readonly IUrlHelperFactory _urlHelperFactory;
-        private FileVersionProvider _fileVersionProvider;
+        readonly IBundleProvider _bundleProvider;
+        readonly BundleOptions _options;
+        readonly IWebHostEnvironment _hostingEnvironment;
+        readonly IMemoryCache _cache;
+        readonly HtmlEncoder _htmlEncoder;
+        readonly IUrlHelperFactory _urlHelperFactory;
+        FileVersionProvider _fileVersionProvider;
 
-        public BundleTagHelper(IWebHostEnvironment hostingEnvironment, IMemoryCache cache, HtmlEncoder htmlEncoder, IUrlHelperFactory urlHelperFactory, BundleOptions options = null, IBundleProvider bundleProvider = null)
+        public BundleTagHelper(IWebHostEnvironment hostingEnvironment, IMemoryCache cache, HtmlEncoder htmlEncoder,
+            IUrlHelperFactory urlHelperFactory, BundleOptions options = null, IBundleProvider bundleProvider = null)
         {
-            if (hostingEnvironment == null) throw new ArgumentNullException(nameof(hostingEnvironment));
-            if (cache == null) throw new ArgumentNullException(nameof(cache));
-            if (htmlEncoder == null) throw new ArgumentNullException(nameof(htmlEncoder));
-            if (urlHelperFactory == null) throw new ArgumentNullException(nameof(urlHelperFactory));
+            if (hostingEnvironment == null)
+            {
+                throw new ArgumentNullException(nameof(hostingEnvironment));
+            }
+
+            if (cache == null)
+            {
+                throw new ArgumentNullException(nameof(cache));
+            }
+
+            if (htmlEncoder == null)
+            {
+                throw new ArgumentNullException(nameof(htmlEncoder));
+            }
+
+            if (urlHelperFactory == null)
+            {
+                throw new ArgumentNullException(nameof(urlHelperFactory));
+            }
 
             if (options == null)
             {
@@ -39,12 +57,12 @@ namespace BundlerMinifier.TagHelpers
                 options.Configure(hostingEnvironment);
             }
 
-            _bundleProvider = bundleProvider ?? new BundleProvider(hostingEnvironment);
-            _options = options;
-            _hostingEnvironment = hostingEnvironment;
-            _cache = cache;
-            _htmlEncoder = htmlEncoder;
-            _urlHelperFactory = urlHelperFactory;
+            this._bundleProvider = bundleProvider ?? new BundleProvider(hostingEnvironment);
+            this._options = options;
+            this._hostingEnvironment = hostingEnvironment;
+            this._cache = cache;
+            this._htmlEncoder = htmlEncoder;
+            this._urlHelperFactory = urlHelperFactory;
         }
 
         [HtmlAttributeNotBound]
@@ -57,88 +75,102 @@ namespace BundlerMinifier.TagHelpers
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {
             output.SuppressOutput();
-            var bundle = _bundleProvider.GetBundle(BundleName);
-            if (bundle != null)
+            var bundle = this._bundleProvider.GetBundle(this.BundleName);
+            if (bundle == null)
             {
-                var files = GetFiles(bundle);
-                foreach (var file in files)
+                return;
+            }
+
+            var files = this.GetFiles(bundle);
+            foreach (var file in files)
+            {
+                var src = this.GetSrc(file);
+                if (src == null)
                 {
-                    var src = GetSrc(file);
-                    if (src == null)
-                        continue;
+                    continue;
+                }
 
-                    if (_options.AppendVersion)
-                    {
-                        src = GetVersionedSrc(src);
-                    }
+                if (this._options.AppendVersion)
+                {
+                    src = this.GetVersionedSrc(src);
+                }
 
-                    if (bundle.OutputFileUrl.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
-                    {
-                        output.Content.AppendHtmlLine($"<script src=\"{_htmlEncoder.Encode(src)}\" type=\"text/javascript\"></script>");
-                    }
-                    else if (bundle.OutputFileUrl.EndsWith(".css", StringComparison.OrdinalIgnoreCase))
-                    {
-                        output.Content.AppendHtmlLine($"<link href=\"{_htmlEncoder.Encode(src)}\" rel=\"stylesheet\" />");
-                    }
+                if (bundle.OutputFileUrl.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
+                {
+                    output.Content.AppendHtmlLine(
+                        $"<script src=\"{this._htmlEncoder.Encode(src)}\" type=\"text/javascript\"></script>");
+                }
+                else if (bundle.OutputFileUrl.EndsWith(".css", StringComparison.OrdinalIgnoreCase))
+                {
+                    output.Content.AppendHtmlLine(
+                        $"<link href=\"{this._htmlEncoder.Encode(src)}\" rel=\"stylesheet\" />");
                 }
             }
         }
 
-        private IEnumerable<string> GetFiles(Bundle bundle)
+        IEnumerable<string> GetFiles(Bundle bundle)
         {
-            if (_options.UseBundles)
+            if (!this._options.UseBundles)
             {
-                var bundlePath = bundle.OutputFileUrl;
-                if (_options.UseMinifiedFiles)
-                {
-                    var extension = Path.GetExtension(bundlePath);
-                    if (extension != null)
-                    {
-                        var minifiedPath = Path.ChangeExtension(bundlePath, ".min" + extension);
-                        if (File.Exists(minifiedPath))
-                        {
-                            bundlePath = minifiedPath;
-                        }
-                    }
-                }
+                return bundle.InputFileUrls;
+            }
 
+            var bundlePath = bundle.OutputFileUrl;
+            if (!this._options.UseMinifiedFiles)
+            {
                 return new[] { bundlePath };
             }
 
-            return bundle.InputFileUrls;
+            var extension = Path.GetExtension(bundlePath);
+            if (extension == null)
+            {
+                return new[] { bundlePath };
+            }
+
+            var minifiedPath = Path.ChangeExtension(bundlePath, ".min" + extension);
+            if (File.Exists(minifiedPath))
+            {
+                bundlePath = minifiedPath;
+            }
+
+            return new[] { bundlePath };
+
         }
 
-        private string GetVersionedSrc(string srcValue)
+        string GetVersionedSrc(string srcValue)
         {
-            EnsureFileVersionProvider();
+            this.EnsureFileVersionProvider();
 
-            if (_options.AppendVersion)
+            if (this._options.AppendVersion)
             {
-                srcValue = _fileVersionProvider.AddFileVersionToPath(srcValue);
+                srcValue = this._fileVersionProvider.AddFileVersionToPath(srcValue);
             }
 
             return srcValue;
         }
 
-        private void EnsureFileVersionProvider()
+        void EnsureFileVersionProvider()
         {
-            if (_fileVersionProvider == null)
-            {
-                _fileVersionProvider = new FileVersionProvider(_hostingEnvironment.WebRootFileProvider, _cache, ViewContext.HttpContext.Request.PathBase);
-            }
+            this._fileVersionProvider ??= new FileVersionProvider(
+                this._hostingEnvironment.WebRootFileProvider, 
+                this._cache,
+                this.ViewContext.HttpContext.Request.PathBase);
         }
 
-        private string GetSrc(string path)
+        string GetSrc(string path)
         {
-            var root = FileHelpers.NormalizePath(_hostingEnvironment.WebRootPath.DemandTrailingPathSeparatorChar());
-            var filePath = FileHelpers.NormalizePath(path);
-            if (filePath.StartsWith(root))
+            var root = this._hostingEnvironment.WebRootPath
+                .DemandTrailingPathSeparatorChar()
+                .NormalizePath();
+            
+            var filePath = path.NormalizePath();
+            if (!filePath.StartsWith(root))
             {
-                var urlHelper = _urlHelperFactory.GetUrlHelper(ViewContext);
-                return urlHelper.Content("~/" + filePath.Substring(root.Length).Replace('\\', '/'));
+                return null;
             }
 
-            return null;
+            var urlHelper = this._urlHelperFactory.GetUrlHelper(this.ViewContext);
+            return urlHelper.Content("~/" + filePath[root.Length..].Replace('\\', '/'));
         }
     }
 }

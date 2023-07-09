@@ -1,72 +1,72 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 
 namespace BundlerMinifier
 {
-    internal class ChangeHandler : IEquatable<ChangeHandler>
+    class ChangeHandler : IEquatable<ChangeHandler>
     {
-        private static string[] _ignorePatterns = { "node_modules".AsPathSegment(), "bower_components".AsPathSegment(), "jspm_packages".AsPathSegment() };
-        private readonly Bundle _bundle;
-        private readonly string _configFile;
-        private readonly BundleFileProcessor _processor;
+        static readonly string[] s_IgnorePatterns = { "node_modules".AsPathSegment(), "bower_components".AsPathSegment(), "jspm_packages".AsPathSegment() };
+        readonly string _configFile;
+        readonly BundleFileProcessor _processor;
 
         public ChangeHandler(BundleFileProcessor processor, string configFile, Bundle bundle)
         {
-            _processor = processor;
-            _configFile = configFile;
-            _bundle = bundle;
+            this._processor = processor;
+            this._configFile = configFile;
+            this.Bundle = bundle;
         }
 
-        public Bundle Bundle => _bundle;
+        public Bundle Bundle { get; }
 
         public bool Equals(ChangeHandler other)
         {
             return other != null
-                && string.Equals(_bundle.OutputFileName, other._bundle.OutputFileName, StringComparison.Ordinal)
-                && _bundle.InputFiles.Count == other._bundle.InputFiles.Count
-                && SetCompare(_bundle.InputFiles, other._bundle.InputFiles, StringComparer.Ordinal)
-                && string.Equals(_bundle.SourceMapRootPath, other._bundle.SourceMapRootPath, StringComparison.Ordinal)
-                && _bundle.SourceMap == other._bundle.SourceMap
-                && SetCompare(_bundle.Minify, other._bundle.Minify, (l, r) => string.Equals(l.Key, r.Key, StringComparison.Ordinal) && Equals(l.Value, r.Value));
+                && string.Equals(this.Bundle.OutputFileName, other.Bundle.OutputFileName, StringComparison.Ordinal)
+                && this.Bundle.InputFiles.Count == other.Bundle.InputFiles.Count
+                && SetCompare(this.Bundle.InputFiles, other.Bundle.InputFiles, StringComparer.Ordinal)
+                && string.Equals(this.Bundle.SourceMapRootPath, other.Bundle.SourceMapRootPath, StringComparison.Ordinal)
+                && this.Bundle.SourceMap == other.Bundle.SourceMap
+                && SetCompare(this.Bundle.Minify, other.Bundle.Minify, (l, r) => string.Equals(l.Key, r.Key, StringComparison.Ordinal) && Equals(l.Value, r.Value));
         }
 
-        private class DelegateToComparer<T> : IEqualityComparer<T>
+        class DelegateToComparer<T> : IEqualityComparer<T>
         {
-            private Func<T, T, bool> _equals;
-            private Func<T, int> _getHashCode;
+            readonly Func<T, T, bool> _equals;
+            readonly Func<T, int> _getHashCode;
 
             public DelegateToComparer(Func<T, T, bool> equals, Func<T, int> getHashCode)
             {
-                _equals = equals;
-                _getHashCode = getHashCode ?? (x => 0);
+                this._equals = equals;
+                this._getHashCode = getHashCode ?? (x => 0);
             }
 
             public bool Equals(T x, T y)
             {
-                return _equals(x, y);
+                return this._equals(x, y);
             }
 
             public int GetHashCode(T obj)
             {
-                return _getHashCode(obj);
+                return this._getHashCode(obj);
             }
         }
 
-        private bool SetCompare<T>(IEnumerable<T> left, IEnumerable<T> right, Func<T, T, bool> comparer, Func<T, int> getHashCode = null)
+        static bool SetCompare<T>(IEnumerable<T> left, IEnumerable<T> right, Func<T, T, bool> comparer, Func<T, int> getHashCode = null)
         {
             return SetCompare(left, right, new DelegateToComparer<T>(comparer, getHashCode));
         }
 
-        private bool SetCompare<T>(IEnumerable<T> left, IEnumerable<T> right, IEqualityComparer<T> comparer)
+        static bool SetCompare<T>(IEnumerable<T> left, IEnumerable<T> right, IEqualityComparer<T> comparer)
         {
             if(left == null && right == null)
             {
                 return true;
             }
 
-            if((left != null) != (right != null))
+            if(left != null != (right != null))
             {
                 return false;
             }
@@ -80,12 +80,12 @@ namespace BundlerMinifier
 
         public override int GetHashCode()
         {
-            return StringComparer.OrdinalIgnoreCase.GetHashCode(_bundle.OutputFileName);
+            return StringComparer.OrdinalIgnoreCase.GetHashCode(this.Bundle.OutputFileName);
         }
 
         public override bool Equals(object obj)
         {
-            return Equals(obj as ChangeHandler);
+            return this.Equals(obj as ChangeHandler);
         }
 
         public bool FilesChanged(FileSystemEventArgs e)
@@ -95,32 +95,35 @@ namespace BundlerMinifier
                 return false;
             }
 
-            if (!BundleFileProcessor.IsFileConfigured(_configFile, e.FullPath).Any())
+            if (!BundleFileProcessor.IsFileConfigured(this._configFile, e.FullPath).Any())
             {
                 return false;
             }
 
-            var inputs = _bundle.GetAbsoluteInputFiles();
-            var inputLastModified = inputs.Count > 0 ? inputs.Max(inputFile => File.GetLastWriteTimeUtc(inputFile)) : DateTime.MaxValue;
+            var inputs = this.Bundle.GetAbsoluteInputFiles();
+            var inputLastModified = inputs.Count > 0 ? inputs.Max(File.GetLastWriteTimeUtc) : DateTime.MaxValue;
 
-            if ((_bundle.GetAbsoluteInputFiles().Count > 1 || _bundle.InputFiles.FirstOrDefault() != _bundle.OutputFileName)
-                && inputLastModified > File.GetLastWriteTimeUtc(_bundle.GetAbsoluteOutputFile()))
+            if ((this.Bundle.GetAbsoluteInputFiles().Count > 1 || this.Bundle.InputFiles.FirstOrDefault() != this.Bundle.OutputFileName)
+                && inputLastModified > File.GetLastWriteTimeUtc(this.Bundle.GetAbsoluteOutputFile()))
             {
-                return _processor.Process(_configFile, new Bundle[] { _bundle });
+                return this._processor.Process(this._configFile, new[] { this.Bundle });
             }
 
             return false;
         }
 
-        private bool IsFileValid(string file)
+        [SuppressMessage("ReSharper", "HeapView.ClosureAllocation")]
+        static bool IsFileValid(string file)
         {
             string fileName = Path.GetFileName(file);
 
             // VS adds ~ to temp file names so let's ignore those
             if (fileName.Contains('~') || fileName.Contains(".min."))
+            {
                 return false;
+            }
 
-            if (_ignorePatterns.Any(p => file.IndexOf(p) > -1))
+            if (s_IgnorePatterns.Any(p => file.IndexOf(p, StringComparison.Ordinal) > -1))
             {
                 //var fsw = (FileSystemWatcher)sender;
                 //fsw.EnableRaisingEvents = false;
@@ -128,7 +131,9 @@ namespace BundlerMinifier
             }
 
             if (!BundleFileProcessor.IsSupported(file))
+            {
                 return false;
+            }
 
             return true;
         }

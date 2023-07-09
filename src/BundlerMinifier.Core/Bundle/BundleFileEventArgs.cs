@@ -1,19 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using JetBrains.Annotations;
 
 namespace BundlerMinifier
 {
+    [PublicAPI]
     public class BundleFileEventArgs : EventArgs
     {
         public BundleFileEventArgs(string outputFileName, Bundle bundle, string baseFolder, bool containsChanges)
         {
-            ContainsChanges = containsChanges;
-            OutputFileName = outputFileName;
-            Bundle = bundle;
-            BaseFolder = baseFolder;
+            this.ContainsChanges = containsChanges;
+            this.OutputFileName = outputFileName;
+            this.Bundle = bundle;
+            this.BaseFolder = baseFolder;
         }
 
         public bool ContainsChanges { get; set; }

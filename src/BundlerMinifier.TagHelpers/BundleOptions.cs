@@ -1,9 +1,9 @@
-using Microsoft.AspNetCore.Hosting;
 #if NETSTANDARD2_0
 using IWebHostEnvironment = Microsoft.AspNetCore.Hosting.IHostingEnvironment;
 #else
 using Microsoft.Extensions.Hosting;
 #endif
+using Microsoft.AspNetCore.Hosting;
 
 namespace BundlerMinifier.TagHelpers
 {
@@ -15,13 +15,15 @@ namespace BundlerMinifier.TagHelpers
 
         internal void Configure(IWebHostEnvironment env)
         {
-            if (env != null)
+            if (env == null)
             {
-                var isDevelopment = env.IsDevelopment();
-                UseBundles = !isDevelopment;
-                UseMinifiedFiles = !isDevelopment;
-                AppendVersion = !isDevelopment;
+                return;
             }
+
+            var isDevelopment = env.IsDevelopment();
+            this.UseBundles = !isDevelopment;
+            this.UseMinifiedFiles = !isDevelopment;
+            this.AppendVersion = !isDevelopment;
         }
     }
 }

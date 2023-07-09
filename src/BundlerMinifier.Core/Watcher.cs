@@ -1,26 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 
 namespace BundlerMinifier
 {
+    [PublicAPI]
     public class Watcher
     {
-        private static readonly List<ChangeHandler> ChangeHandlers = new List<ChangeHandler>();
-        private static FileSystemWatcher _listener;
-        private static string _configPath;
-        private static bool _watchingAll;
-        private static BundleFileProcessor _processor;
+        static readonly List<ChangeHandler> s_ChangeHandlers = new List<ChangeHandler>();
+        static FileSystemWatcher s_Listener;
+        static string s_ConfigPath;
+        static bool s_WatchingAll;
+        static BundleFileProcessor s_Processor;
 
+        [SuppressMessage("ReSharper", "HeapView.ClosureAllocation")]
+        [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
         public static bool Configure(BundleFileProcessor processor, List<string> configurations, string configPath)
         {
-            _processor = processor;
+            s_Processor = processor;
 
-            IEnumerable<Bundle> bundles;
-
-            if (!BundleHandler.TryGetBundles(configPath, out bundles))
+            if (!BundleHandler.TryGetBundles(configPath, out var bundles))
             {
                 return false;
             }
@@ -29,36 +32,37 @@ namespace BundlerMinifier
             {
                 foreach (string config in configurations)
                 {
-                    Bundle bundle = bundles.FirstOrDefault(x => string.Equals(x.OutputFileName, config, StringComparison.OrdinalIgnoreCase));
+                    var bundle = bundles.FirstOrDefault(x =>
+                        string.Equals(x.OutputFileName, config, StringComparison.OrdinalIgnoreCase));
 
                     if (bundle != null)
                     {
-                        ChangeHandlers.Add(new ChangeHandler(processor, configPath, bundle));
+                        s_ChangeHandlers.Add(new ChangeHandler(processor, configPath, bundle));
                     }
                 }
             }
             else
             {
-                foreach (Bundle bundle in bundles)
+                foreach (var bundle in bundles)
                 {
-                    ChangeHandlers.Add(new ChangeHandler(processor, configPath, bundle));
+                    s_ChangeHandlers.Add(new ChangeHandler(processor, configPath, bundle));
                 }
 
-                _watchingAll = true;
+                s_WatchingAll = true;
             }
 
-            if (ChangeHandlers.Count > 0)
+            if (s_ChangeHandlers.Count > 0)
             {
                 ConfigureWatcher(configPath);
             }
 
-            return ChangeHandlers.Count > 0;
+            return s_ChangeHandlers.Count > 0;
         }
 
-        private static void ConfigureWatcher(string configPath)
+        static void ConfigureWatcher(string configPath)
         {
-            _configPath = configPath;
-            string basePath = new FileInfo(configPath).Directory.FullName;
+            s_ConfigPath = configPath;
+            string basePath = new FileInfo(configPath).Directory?.FullName ?? string.Empty;
             var fsw = new FileSystemWatcher(basePath);
 
             fsw.Changed += FilesChanged;
@@ -67,30 +71,32 @@ namespace BundlerMinifier
             fsw.IncludeSubdirectories = true;
             fsw.NotifyFilter = NotifyFilters.Size | NotifyFilters.CreationTime | NotifyFilters.FileName;
             fsw.EnableRaisingEvents = true;
-            _listener = fsw;
+            s_Listener = fsw;
         }
 
         public static void Stop()
         {
-            FileSystemWatcher fsw = _listener;
+            var fsw = s_Listener;
 
-            if (fsw != null)
+            if (fsw == null)
             {
-                _listener = null;
-                fsw.Changed -= FilesChanged;
-                fsw.Changed -= FilesChanged;
+                return;
+            }
 
-                try
-                {
-                    fsw.Dispose();
-                }
-                catch (ObjectDisposedException)
-                {
-                }
+            s_Listener = null;
+            fsw.Changed -= FilesChanged;
+            fsw.Changed -= FilesChanged;
+
+            try
+            {
+                fsw.Dispose();
+            }
+            catch (ObjectDisposedException)
+            {
             }
         }
 
-        private static async void FilesChanged(object sender, FileSystemEventArgs e)
+        static async void FilesChanged(object sender, FileSystemEventArgs e)
         {
             const int maxRetries = 10;
             var fsw = (FileSystemWatcher)sender;
@@ -104,7 +110,7 @@ namespace BundlerMinifier
 
                 try
                 {
-                    if (string.Equals(e.FullPath, _configPath, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(e.FullPath, s_ConfigPath, StringComparison.OrdinalIgnoreCase))
                     {
                         bool changed = ReloadConfig();
                         suppressOutputMessage = !changed;
@@ -118,7 +124,7 @@ namespace BundlerMinifier
                     {
                         bool anyRan = false;
 
-                        foreach (ChangeHandler handler in ChangeHandlers)
+                        foreach (var handler in s_ChangeHandlers)
                         {
                             anyRan |= handler.FilesChanged(e);
                         }
@@ -150,40 +156,45 @@ namespace BundlerMinifier
             }
         }
 
-        private static bool ReloadConfig()
+        [SuppressMessage("ReSharper", "HeapView.ClosureAllocation")]
+        [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
+        static bool ReloadConfig()
         {
             bool anyChanges = false;
-            IEnumerable<Bundle> bundles;
 
-            if (!BundleHandler.TryGetBundles(_configPath, out bundles))
+            if (!BundleHandler.TryGetBundles(s_ConfigPath, out var bundles))
             {
                 throw new Exception("Unable to load bundles.");
             }
 
-            var oldHandlers = ChangeHandlers.ToList();
+            var oldHandlers = s_ChangeHandlers.ToList();
 
-            if (!_watchingAll)
+            if (!s_WatchingAll)
             {
-                foreach (ChangeHandler handler in oldHandlers)
+                foreach (var handler in oldHandlers)
                 {
-                    Bundle bundle = bundles.FirstOrDefault(x => string.Equals(x.OutputFileName, handler.Bundle.OutputFileName, StringComparison.OrdinalIgnoreCase));
+                    var bundle = bundles.FirstOrDefault(x => string.Equals(x.OutputFileName,
+                        handler.Bundle.OutputFileName, StringComparison.OrdinalIgnoreCase));
 
                     if (bundle != null)
                     {
-                        ChangeHandler newHandler = new ChangeHandler(_processor, bundle.FileName, bundle);
+                        var newHandler = new ChangeHandler(s_Processor, bundle.FileName, bundle);
 
-                        if (!newHandler.Equals(handler))
+                        if (newHandler.Equals(handler))
                         {
-                            ChangeHandlers.Remove(handler);
-                            ChangeHandlers.Add(newHandler);
-                            _processor.Process(_configPath, new[] { bundle });
-                            anyChanges = true;
+                            continue;
                         }
+
+                        s_ChangeHandlers.Remove(handler);
+                        s_ChangeHandlers.Add(newHandler);
+                        s_Processor.Process(s_ConfigPath, new[] { bundle });
+                        anyChanges = true;
                     }
                     else
                     {
-                        ChangeHandlers.Remove(handler);
-                        Console.WriteLine($"Cannot find configuration {handler.Bundle.OutputFileName}".Orange().Bright());
+                        s_ChangeHandlers.Remove(handler);
+                        Console.WriteLine(
+                            $"Cannot find configuration {handler.Bundle.OutputFileName}".Orange().Bright());
                     }
                 }
             }
@@ -191,29 +202,34 @@ namespace BundlerMinifier
             {
                 HashSet<Bundle> bundlesToProcess = new HashSet<Bundle>(bundles);
 
-                foreach (ChangeHandler handler in oldHandlers)
+                foreach (var handler in oldHandlers)
                 {
-                    Bundle bundle = bundles.FirstOrDefault(x => string.Equals(x.OutputFileName, handler.Bundle.OutputFileName, StringComparison.OrdinalIgnoreCase));
+                    var bundle = bundles.FirstOrDefault(x => string.Equals(x.OutputFileName,
+                        handler.Bundle.OutputFileName, StringComparison.OrdinalIgnoreCase));
 
-                    if (bundle != null)
+                    if (bundle == null)
                     {
-                        bundlesToProcess.Remove(bundle);
-                        ChangeHandler newHandler = new ChangeHandler(_processor, bundle.FileName, bundle);
-
-                        if (!newHandler.Equals(handler))
-                        {
-                            ChangeHandlers.Remove(handler);
-                            ChangeHandlers.Add(newHandler);
-                            _processor.Process(_configPath, new[] { bundle });
-                            anyChanges = true;
-                        }
+                        continue;
                     }
+
+                    bundlesToProcess.Remove(bundle);
+                    var newHandler = new ChangeHandler(s_Processor, bundle.FileName, bundle);
+
+                    if (newHandler.Equals(handler))
+                    {
+                        continue;
+                    }
+
+                    s_ChangeHandlers.Remove(handler);
+                    s_ChangeHandlers.Add(newHandler);
+                    s_Processor.Process(s_ConfigPath, new[] { bundle });
+                    anyChanges = true;
                 }
 
-                foreach (Bundle bundle in bundlesToProcess)
+                foreach (var bundle in bundlesToProcess)
                 {
-                    ChangeHandlers.Add(new ChangeHandler(_processor, _configPath, bundle));
-                    _processor.Process(_configPath, new[] { bundle });
+                    s_ChangeHandlers.Add(new ChangeHandler(s_Processor, s_ConfigPath, bundle));
+                    s_Processor.Process(s_ConfigPath, new[] { bundle });
                     anyChanges = true;
                 }
             }

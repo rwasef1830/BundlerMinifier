@@ -48,7 +48,7 @@ namespace BundlerMinifier
         }
 
         [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
-        private static void MinifyJavaScript(Bundle bundle, MinificationResult minResult)
+        static void MinifyJavaScript(Bundle bundle, MinificationResult minResult)
         {
             var settings = JavaScriptOptions.GetSettings(bundle);
 
@@ -62,34 +62,34 @@ namespace BundlerMinifier
                 string minFile = GetMinFileName(minResult.FileName);
                 string mapFile = minFile + ".map";
 
-                using (StringWriter writer = new StringWriter())
+                using var writer = new StringWriter();
+                using (var sourceMap = new V3SourceMap(writer))
                 {
-                    using (V3SourceMap sourceMap = new V3SourceMap(writer))
+                    settings.SymbolsMap = sourceMap;
+                    sourceMap.StartPackage(minFile, mapFile);
+                    sourceMap.SourceRoot = bundle.SourceMapRootPath;
+
+                    string file = minResult.FileName;
+
+                    if (bundle.OutputIsMinFile)
                     {
-                        settings.SymbolsMap = sourceMap;
-                        sourceMap.StartPackage(minFile, mapFile);
-                        sourceMap.SourceRoot = bundle.SourceMapRootPath;
+                        var inputs = bundle.GetAbsoluteInputFiles();
 
-                        string file = minResult.FileName;
-
-                        if (bundle.OutputIsMinFile)
+                        if (inputs.Count == 1)
                         {
-                            var inputs = bundle.GetAbsoluteInputFiles();
-
-                            if (inputs.Count == 1)
-                                file = inputs[0];
+                            file = inputs[0];
                         }
-
-                        var uglifyResult = Uglify.Js(bundle.Output, file, settings);
-                        WriteMinFile(bundle, minResult, uglifyResult);
                     }
 
-                    minResult.SourceMap = writer.ToString();
+                    var uglifyResult = Uglify.Js(bundle.Output, file, settings);
+                    WriteMinFile(bundle, minResult, uglifyResult);
                 }
+
+                minResult.SourceMap = writer.ToString();
             }
         }
 
-        private static void MinifyCss(Bundle bundle, MinificationResult minResult)
+        static void MinifyCss(Bundle bundle, MinificationResult minResult)
         {
             var settings = CssOptions.GetSettings(bundle);
 
@@ -97,7 +97,7 @@ namespace BundlerMinifier
             WriteMinFile(bundle, minResult, uglifyResult);
         }
 
-        private static void MinifyHtml(Bundle bundle, MinificationResult minResult)
+        static void MinifyHtml(Bundle bundle, MinificationResult minResult)
         {
             var settings = HtmlOptions.GetSettings(bundle);
 
@@ -105,7 +105,7 @@ namespace BundlerMinifier
             WriteMinFile(bundle, minResult, uglifyResult);
         }
 
-        private static void WriteMinFile(Bundle bundle, MinificationResult minResult, UglifyResult uglifyResult)
+        static void WriteMinFile(Bundle bundle, MinificationResult minResult, UglifyResult uglifyResult)
         {
             var minFile = GetMinFileName(minResult.FileName);
             minResult.MinifiedContent = uglifyResult.Code?.Trim();
@@ -116,12 +116,14 @@ namespace BundlerMinifier
                 minResult.Changed |= containsChanges;
                 OnBeforeWritingMinFile(minResult.FileName, minFile, bundle, containsChanges);
 
-                if (containsChanges)
+                if (!containsChanges)
                 {
-                    Directory.CreateDirectory(Path.GetDirectoryName(minFile));
-                    File.WriteAllText(minFile, minResult.MinifiedContent, new UTF8Encoding(false));
-                    OnAfterWritingMinFile(minResult.FileName, minFile, bundle, containsChanges);
+                    return;
                 }
+
+                Directory.CreateDirectory(Path.GetDirectoryName(minFile));
+                File.WriteAllText(minFile, minResult.MinifiedContent, new UTF8Encoding(false));
+                OnAfterWritingMinFile(minResult.FileName, minFile, bundle, containsChanges);
             }
             else
             {
@@ -134,8 +136,8 @@ namespace BundlerMinifier
             GzipFile(sourceFile, bundle, minificationChanged, minifiedContent);
             BrotliFile(sourceFile, bundle, minificationChanged, minifiedContent);
         }
-        
-        private static void GzipFile(string sourceFile, Bundle bundle, bool minificationChanged, string minifiedContent)
+
+        static void GzipFile(string sourceFile, Bundle bundle, bool minificationChanged, string minifiedContent)
         {
             CompressFile(
                 sourceFile,
@@ -146,7 +148,7 @@ namespace BundlerMinifier
                 s => new GZipStream(s, CompressionLevel.Optimal));
         }
 
-        private static void BrotliFile(string sourceFile, Bundle bundle, bool minificationChanged, string minifiedContent)
+        static void BrotliFile(string sourceFile, Bundle bundle, bool minificationChanged, string minifiedContent)
         {
             CompressFile(
                 sourceFile,
@@ -158,7 +160,7 @@ namespace BundlerMinifier
         }
 
         [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
-        private static void CompressFile(
+        static void CompressFile(
             string sourceFile,
             Bundle bundle,
             bool minificationChanged,
@@ -177,21 +179,23 @@ namespace BundlerMinifier
 
             OnBeforeWritingGzipFile(sourceFile, compressedFile, bundle, containsChanges);
 
-            if (containsChanges)
+            if (!containsChanges)
             {
-                byte[] buffer = Encoding.UTF8.GetBytes(minifiedContent ?? bundle.Output);
-
-                using (var fileStream = File.OpenWrite(compressedFile))
-                using (var compressorStream = compressorConstructor(fileStream))
-                {
-                    compressorStream.Write(buffer, 0, buffer.Length);
-                }
-
-                OnAfterWritingGzipFile(sourceFile, compressedFile, bundle, containsChanges);
+                return;
             }
+
+            byte[] buffer = Encoding.UTF8.GetBytes(minifiedContent ?? bundle.Output);
+
+            using (var fileStream = File.OpenWrite(compressedFile))
+            using (var compressorStream = compressorConstructor(fileStream))
+            {
+                compressorStream.Write(buffer, 0, buffer.Length);
+            }
+
+            OnAfterWritingGzipFile(sourceFile, compressedFile, bundle, containsChanges);
         }
 
-        private static void AddNUglifyErrors(UglifyResult minifier, MinificationResult minResult)
+        static void AddNUglifyErrors(UglifyResult minifier, MinificationResult minResult)
         {
             foreach (var error in minifier.Errors)
             {
@@ -208,7 +212,7 @@ namespace BundlerMinifier
             }
         }
 
-        private static void AddGenericException(MinificationResult minResult, Exception ex)
+        static void AddGenericException(MinificationResult minResult, Exception ex)
         {
             minResult.Errors.Add(new MinificationError
             {
@@ -224,10 +228,12 @@ namespace BundlerMinifier
             string fileName = Path.GetFileName(file);
 
             if (fileName.IndexOf(".min.", StringComparison.OrdinalIgnoreCase) > 0)
+            {
                 return file;
+            }
 
             string ext = Path.GetExtension(file);
-            return file.Substring(0, file.LastIndexOf(ext, StringComparison.OrdinalIgnoreCase)) + ".min" + ext;
+            return file[..file.LastIndexOf(ext, StringComparison.OrdinalIgnoreCase)] + ".min" + ext;
         }
 
         static void OnBeforeWritingMinFile(string file, string minFile, Bundle bundle, bool containsChanges)
@@ -252,13 +258,17 @@ namespace BundlerMinifier
 
         static void OnErrorMinifyingFile(MinificationResult result)
         {
-            if (ErrorMinifyingFile != null)
+            if (ErrorMinifyingFile == null)
             {
-                var e = new MinifyFileEventArgs(result.FileName, null, null, false);
-                e.Result = result;
-
-                ErrorMinifyingFile(null, e);
+                return;
             }
+
+            var e = new MinifyFileEventArgs(result.FileName, null, null, false)
+            {
+                Result = result
+            };
+
+            ErrorMinifyingFile(null, e);
         }
 
         public static event EventHandler<MinifyFileEventArgs> BeforeWritingMinFile;

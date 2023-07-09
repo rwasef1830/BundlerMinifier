@@ -1,20 +1,23 @@
 ﻿using System;
+using JetBrains.Annotations;
 
 namespace BundlerMinifier
 {
-    public class ColoredTextRegion : IDisposable
+    sealed class ColoredTextRegion : IDisposable
     {
-        private readonly string _after;
-        private bool _isDisposed;
+        readonly string _after;
+        bool _isDisposed;
 
-        private ColoredTextRegion(Func<string, ColoredText> colorization)
+        ColoredTextRegion(Func<string, ColoredText> colorization)
         {
-            if (!StringExtensions.NoColor)
+            if (StringExtensions.NoColor)
             {
-                string[] parts = colorization("|").ToString().Split('|');
-                Console.Write(parts[0]);
-                _after = parts[1];
+                return;
             }
+
+            string[] parts = colorization("|").ToString().Split('|');
+            Console.Write(parts[0]);
+            this._after = parts[1];
         }
 
         public static IDisposable Create(Func<string, ColoredText> colorization)
@@ -24,87 +27,82 @@ namespace BundlerMinifier
 
         public void Dispose()
         {
-            Dispose(true);
-        }
-
-        protected virtual void Dispose(bool isDisposing)
-        {
-            if (_isDisposed)
+            if (this._isDisposed)
             {
                 return;
             }
 
-            _isDisposed = true;
+            this._isDisposed = true;
 
             if (!StringExtensions.NoColor)
             {
-                Console.Write(_after);
+                Console.Write(this._after);
             }
         }
     }
 
-    public class ColoredText
+    class ColoredText
     {
-        private int _color;
-        private string _message;
-        private bool _bright;
+        int _color;
+        readonly string _message;
+        bool _bright;
 
         public ColoredText(string message)
         {
-            _message = message;
+            this._message = message;
         }
 
         public ColoredText Bright()
         {
-            _bright = true;
+            this._bright = true;
             return this;
         }
 
         public ColoredText Red()
         {
-            _color = 31;
+            this._color = 31;
             return this;
         }
 
         public ColoredText Black()
         {
-            _color = 30;
+            this._color = 30;
             return this;
         }
 
         public ColoredText Green()
         {
-            _color = 32;
+            this._color = 32;
             return this;
         }
 
         public ColoredText Orange()
         {
-            _color = 33;
+            this._color = 33;
             return this;
         }
 
         public ColoredText Blue()
         {
-            _color = 34;
+            this._color = 34;
             return this;
         }
 
         public ColoredText Purple()
         {
-            _color = 35;
+            this._color = 35;
             return this;
         }
 
         public ColoredText Cyan()
         {
-            _color = 36;
+            this._color = 36;
             return this;
         }
 
         public ColoredText LightGray()
         {
-            _color = 37;
+            this._color = 37;
             return this;
         }
 
@@ -115,22 +113,23 @@ namespace BundlerMinifier
 
         public override string ToString()
         {
-            if(StringExtensions.NoColor || _color == 0)
+            if(StringExtensions.NoColor || this._color == 0)
             {
-                return _message;
+                return this._message;
             }
 
-            string colorString = _color.ToString();
-            if (_bright)
+            string colorString = this._color.ToString();
+            if (this._bright)
             {
                 colorString += "m\x1B[1";
             }
 
-            return $"\x1B[{colorString}m{_message}\x1B[0m\x1B[39m\x1B[49m";
+            return $"\x1B[{colorString}m{this._message}\x1B[0m\x1B[39m\x1B[49m";
         }
     }
 
-    public static class StringExtensions
+    [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
+    static class StringExtensions
     {
         public static bool NoColor { get; set; }
 

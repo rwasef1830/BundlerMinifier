@@ -10,7 +10,7 @@ namespace BundlerMinifier
     /// </summary>
     public static class FileHelpers
     {
-        private static readonly string _protocol = "file:///";
+        const string c_Protocol = "file:///";
 
         /// <summary>
         /// Finds the relative path between two files.
@@ -18,19 +18,19 @@ namespace BundlerMinifier
         public static string MakeRelative(string baseFile, string file)
         {
             if (string.IsNullOrEmpty(file))
+            {
                 return file;
+            }
 
-            Uri baseUri = new Uri(_protocol + baseFile, UriKind.RelativeOrAbsolute);
-            Uri fileUri = new Uri(_protocol + file, UriKind.RelativeOrAbsolute);
+            var baseUri = new Uri(c_Protocol + baseFile, UriKind.RelativeOrAbsolute);
+            var fileUri = new Uri(c_Protocol + file, UriKind.RelativeOrAbsolute);
 
             if (baseUri.IsAbsoluteUri)
             {
                 return Uri.UnescapeDataString(baseUri.MakeRelativeUri(fileUri).ToString());
             }
-            else
-            {
-                return baseUri.ToString();
-            }
+
+            return baseUri.ToString();
         }
 
         /// <summary>
@@ -39,10 +39,12 @@ namespace BundlerMinifier
         /// <param name="fileName"></param>
         public static void RemoveReadonlyFlagFromFile(string fileName)
         {
-            FileInfo file = new FileInfo(fileName);
+            var file = new FileInfo(fileName);
 
             if (file.Exists && file.IsReadOnly)
+            {
                 file.IsReadOnly = false;
+            }
         }
 
         /// <summary>
@@ -51,25 +53,18 @@ namespace BundlerMinifier
         public static bool HasFileContentChanged(string fileName, string newContent)
         {
             if (!File.Exists(fileName))
+            {
                 return true;
+            }
 
             string oldContent = File.ReadAllText(fileName);
 
             return oldContent != newContent;
         }
 
-        public static bool IsUnixPathPreferred
-        {
-            get
-            {
-                return Directory.GetCurrentDirectory().IndexOf('/') > -1;
-            }
-        }
+        public static bool IsUnixPathPreferred => Directory.GetCurrentDirectory().IndexOf('/') > -1;
 
-        public static char PathSeparatorChar
-        {
-            get { return IsUnixPathPreferred ? '/' : '\\'; }
-        }
+        public static char PathSeparatorChar => IsUnixPathPreferred ? '/' : '\\';
 
         public static string NormalizePath(this string path)
         {
@@ -79,10 +74,8 @@ namespace BundlerMinifier
             {
                 return path.Replace("\\", "/").Replace("/ ", "\\ ");
             }
-            else
-            {
-                return path.Replace("/", "\\");
-            }
+
+            return path.Replace("/", "\\");
         }
 
         public static string TrimTrailingPathSeparatorChar(this string path)
@@ -111,11 +104,9 @@ namespace BundlerMinifier
         [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
         public static string ReadAllText(string file)
         {
-            using (FileStream stream = File.OpenRead(file))
-            using (StreamReader reader = new StreamReader(stream, Encoding.UTF8, true, 8192, true))
-            {
-                return reader.ReadToEnd();
-            }
+            using var stream = File.OpenRead(file);
+            using var reader = new StreamReader(stream, Encoding.UTF8, true, 8192, true);
+            return reader.ReadToEnd();
         }
     }
 }

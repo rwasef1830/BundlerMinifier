@@ -1,20 +1,22 @@
 ﻿using System;
+using JetBrains.Annotations;
 
 namespace BundlerMinifier
 {
+    [PublicAPI]
     public class MinifyFileEventArgs : EventArgs
     {
         public MinifyFileEventArgs(string originalFile, string resultFile, bool containsChanges)
         {
-            ContainsChanges = containsChanges;
-            OriginalFile = originalFile;
-            ResultFile = resultFile;
+            this.ContainsChanges = containsChanges;
+            this.OriginalFile = originalFile;
+            this.ResultFile = resultFile;
         }
 
         public MinifyFileEventArgs(string originalFile, string resultFile, Bundle bundle, bool containsChanges)
             : this(originalFile, resultFile, containsChanges)
         {
-            Bundle = bundle;
+            this.Bundle = bundle;
         }
 
         public bool ContainsChanges { get; set; }

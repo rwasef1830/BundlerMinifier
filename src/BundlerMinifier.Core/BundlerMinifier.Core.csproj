@@ -3,7 +3,7 @@
   <Import Project="..\common.props" />
 
   <PropertyGroup>
-    <Version>5.0.8</Version>
+    <Version>6.0.0</Version>
     <TargetFrameworks>netcoreapp3.1;net6.0;net7.0</TargetFrameworks>
     <DefineConstants>$(DefineConstants);DOTNET</DefineConstants>
     <AssemblyName>dotnet-bundle</AssemblyName>
@@ -15,9 +15,11 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>bundle</ToolCommandName>
+    <RootNamespace>BundlerMinifier</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" Version="2023.2.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
   </ItemGroup>
 

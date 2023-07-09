@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using BundlerMinifier;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -9,21 +8,20 @@ namespace BundlerMinifierTest
     [TestClass]
     public class EncodingTest
     {
-        private const string TEST_BUNDLE = "../../../artifacts/test1.json";
-        private BundleFileProcessor _processor;
-        private Guid _guid;
+        BundleFileProcessor _processor;
+        Guid _guid;
 
         [TestInitialize]
         public void Setup()
         {
-            _processor = new BundleFileProcessor();
-            _guid = Guid.NewGuid();
+            this._processor = new BundleFileProcessor();
+            this._guid = Guid.NewGuid();
         }
 
         [TestCleanup]
         public void Cleanup()
         {
-            File.Delete("../../../artifacts/" + _guid + ".json");
+            File.Delete("../../../artifacts/" + this._guid + ".json");
             File.Delete("../../../artifacts/foo.js");
             File.Delete("../../../artifacts/foo.min.js");
             File.Delete("../../../artifacts/foo.min.js.map");
@@ -38,10 +36,10 @@ namespace BundlerMinifierTest
         [TestMethod, TestCategory("Encoding")]
         public void ProcessWithDifferentEncoding()
         {
-            _processor.Process("../../../artifacts/encoding/encoding.json");
+            this._processor.Process("../../../artifacts/encoding/encoding.json");
 
             string jsResult = File.ReadAllText("../../../artifacts/encoding/encoding.js");
-            Assert.AreEqual("var bom = 'àèéèùì';\r\nvar nobom = 'àèéèùì'", jsResult);
+            Assert.AreEqual(@"var bom = 'àèéèùì';\r\nvar nobom = 'àèéèùì'", jsResult);
         }
 
         [TestMethod, TestCategory("Encoding")]

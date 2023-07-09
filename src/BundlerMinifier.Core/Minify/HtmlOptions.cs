@@ -28,21 +28,20 @@ namespace BundlerMinifier
 
         internal static string GetValue(Bundle bundle, string key, object defaultValue = null)
         {
-            if (bundle.Minify.ContainsKey(key))
+            if (bundle.Minify.TryGetValue(key, out var value))
             {
-                object value = bundle.Minify[key];
-                if (value is JArray)
+                if (value is JArray array)
                 {
-                    return string.Join(",", ((JArray)value).Values<string>());
+                    return string.Join(",", array.Values<string>());
                 }
-                else
-                {
-                    return value.ToString();
-                }
+
+                return value.ToString();
             }
 
             if (defaultValue != null)
+            {
                 return defaultValue.ToString();
+            }
 
             return string.Empty;
         }
