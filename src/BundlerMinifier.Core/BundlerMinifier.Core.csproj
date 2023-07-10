@@ -3,7 +3,7 @@
   <Import Project="..\common.props" />
 
   <PropertyGroup>
-    <Version>6.0.2</Version>
+    <Version>6.1.0</Version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <TargetFrameworks>netcoreapp3.1;net6.0;net7.0</TargetFrameworks>
     <DefineConstants>$(DefineConstants);DOTNET</DefineConstants>

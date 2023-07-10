@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 
 namespace BundlerMinifier;
@@ -36,16 +38,24 @@ public class BundleFileProcessor
         return true;
     }
 
+    [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
     public bool Process(string fileName, IEnumerable<Bundle> bundles = null)
     {
         var info = new FileInfo(fileName);
         bundles ??= BundleHandler.GetBundles(fileName);
         bool result = false;
 
-        foreach (var bundle in bundles)
-        {
-            result |= this.ProcessBundle(info.Directory?.FullName, bundle);
-        }
+        Parallel.ForEach(
+            bundles,
+            new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
+            bundle =>
+            {
+                var localResult = this.ProcessBundle(info.Directory?.FullName, bundle);
+                lock (bundles)
+                {
+                    result |= localResult;
+                }
+            });
 
         return result;
     }
@@ -71,7 +81,8 @@ public class BundleFileProcessor
         {
             foreach (string input in bundle.GetAbsoluteInputFiles())
             {
-                if (input.Equals(sourceFile, StringComparison.OrdinalIgnoreCase) || input.Equals(sourceFileFolder, StringComparison.OrdinalIgnoreCase))
+                if (input.Equals(sourceFile, StringComparison.OrdinalIgnoreCase) ||
+                    input.Equals(sourceFileFolder, StringComparison.OrdinalIgnoreCase))
                 {
                     this.ProcessBundle(bundleFileFolder, bundle);
                 }
@@ -239,41 +250,49 @@ public class BundleFileProcessor
     }
 
     public event EventHandler<BundleFileEventArgs> Processing;
+
     protected void OnProcessing(Bundle bundle, string baseFolder)
     {
-        this.Processing?.Invoke(this, new BundleFileEventArgs(bundle.GetAbsoluteOutputFile(), bundle, baseFolder, false));
+        this.Processing?.Invoke(this,
+            new BundleFileEventArgs(bundle.GetAbsoluteOutputFile(), bundle, baseFolder, false));
     }
 
     public event EventHandler<BundleFileEventArgs> BeforeBundling;
+
     protected void OnBeforeBundling(Bundle bundle, string baseFolder, bool containsChanges)
     {
-        this.BeforeBundling?.Invoke(this, new BundleFileEventArgs(bundle.GetAbsoluteOutputFile(), bundle, baseFolder, containsChanges));
+        this.BeforeBundling?.Invoke(this,
+            new BundleFileEventArgs(bundle.GetAbsoluteOutputFile(), bundle, baseFolder, containsChanges));
     }
 
 
     public event EventHandler<BundleFileEventArgs> AfterBundling;
+
     protected void OnAfterBundling(Bundle bundle, string baseFolder, bool containsChanges)
     {
-        this.AfterBundling?.Invoke(this, new BundleFileEventArgs(bundle.GetAbsoluteOutputFile(), bundle, baseFolder, containsChanges));
+        this.AfterBundling?.Invoke(this,
+            new BundleFileEventArgs(bundle.GetAbsoluteOutputFile(), bundle, baseFolder, containsChanges));
     }
 
     public event EventHandler<MinifyFileEventArgs> BeforeWritingSourceMap;
+
     protected void OnBeforeWritingSourceMap(string file, string mapFile, bool containsChanges)
     {
         this.BeforeWritingSourceMap?.Invoke(this, new MinifyFileEventArgs(file, mapFile, containsChanges));
     }
 
     public event EventHandler<MinifyFileEventArgs> AfterWritingSourceMap;
+
     protected void OnAfterWritingSourceMap(string file, string mapFile, bool containsChanges)
     {
         this.AfterWritingSourceMap?.Invoke(this, new MinifyFileEventArgs(file, mapFile, containsChanges));
     }
 
     public event EventHandler<BundleFileEventArgs> MinificationSkipped;
+
     protected void OnMinificationSkipped(Bundle bundle, string baseFolder, bool containsChanges)
     {
-        this.MinificationSkipped?.Invoke(this, new BundleFileEventArgs(bundle.GetAbsoluteOutputFile(), bundle, baseFolder, containsChanges));
+        this.MinificationSkipped?.Invoke(this,
+            new BundleFileEventArgs(bundle.GetAbsoluteOutputFile(), bundle, baseFolder, containsChanges));
     }
-
-
 }

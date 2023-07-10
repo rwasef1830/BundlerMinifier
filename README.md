@@ -26,7 +26,8 @@ Invoke it by calling `dotnet tool run bundle`.
 - Shortcut to update all bundles in solution
 - Suppress output file generation
 - Support NUglify killSwitch and ignoreErrorList directives for each bundle.
-- Bundle can refer to the output file path of another bundle to include its input files (supports recursion).
+- A bundle can refer to the output file path of another bundle to include its input files (supports recursion).
+- Bundles are processed in parallel for a faster build.
 
 ### A note about encoding
 
