@@ -156,7 +156,8 @@ public class BundlerTest
     [TestMethod]
     public void Process_WithMissingFiles_ShouldThrow()
     {
-        Assert.ThrowsException<FileNotFoundException>(() => this._processor.Process(c_TestBundle.Replace("test1", "test10")));
+        var ex = Assert.ThrowsException<AggregateException>(() => this._processor.Process(c_TestBundle.Replace("test1", "test10")));
+        Assert.AreEqual(ex.InnerException?.GetType(), typeof(FileNotFoundException));
     }
 
     [TestMethod]

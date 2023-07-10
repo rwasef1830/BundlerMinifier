@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using BundlerMinifier;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -34,12 +35,13 @@ public class EncodingTest
     }
 
     [TestMethod, TestCategory("Encoding")]
+    [SuppressMessage("ReSharper", "StringLiteralTypo")]
     public void ProcessWithDifferentEncoding()
     {
         this._processor.Process("../../../artifacts/encoding/encoding.json");
 
         string jsResult = File.ReadAllText("../../../artifacts/encoding/encoding.js");
-        Assert.AreEqual(@"var bom = 'àèéèùì';\r\nvar nobom = 'àèéèùì'", jsResult);
+        Assert.AreEqual("var bom = 'àèéèùì';\r\nvar nobom = 'àèéèùì'", jsResult);
     }
 
     [TestMethod, TestCategory("Encoding")]
