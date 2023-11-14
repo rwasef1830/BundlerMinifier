@@ -22,7 +22,7 @@ namespace Microsoft.AspNetCore.Antiforgery.Internal
             catch (TargetInvocationException)
             {
                 // Fallback to a FIPS compliant SHA256 algorithm.
-                return new SHA256CryptoServiceProvider();
+                return SHA256.Create();
             }
         }
     }
