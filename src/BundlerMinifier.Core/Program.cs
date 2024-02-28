@@ -75,7 +75,7 @@ class Program
         var processor = new BundleFileProcessor();
         EventHookups(processor);
 
-        List<string> configurations = new List<string>();
+        List<string> configurations = [];
         bool isClean = false;
         bool isWatch = false;
         bool isNoColor = false;
@@ -225,7 +225,22 @@ class Program
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"{ex.Message}".Red().Bright());
+            var exceptions = new List<Exception>();
+
+            if (ex is AggregateException aggregateException)
+            {
+                exceptions.AddRange(aggregateException.InnerExceptions);
+            }
+            else
+            {
+                exceptions.Add(ex);
+            }
+
+            foreach (var exception in exceptions)
+            {
+                Console.WriteLine(exception.Message);
+            }
+
             return -1;
         }
     }
@@ -234,20 +249,20 @@ class Program
     {
         // For console colors, see http://stackoverflow.com/questions/23975735/what-is-this-u001b9-syntax-of-choosing-what-color-text-appears-on-console
 
-        processor.Processing += (s, e) =>
+        processor.Processing += (_, e) =>
         {
             Console.WriteLine($"Processing {e.Bundle.OutputFileName.Cyan().Bright()}");
             FileHelpers.RemoveReadonlyFlagFromFile(e.Bundle.GetAbsoluteOutputFile());
         };
-        processor.AfterBundling += (s, e) => { Console.WriteLine("  Bundled".Green().Bright()); };
-        processor.BeforeWritingSourceMap += (s, e) => { FileHelpers.RemoveReadonlyFlagFromFile(e.ResultFile); };
-        processor.AfterWritingSourceMap += (s, e) => { Console.WriteLine("  Sourcemapped".Green().Bright()); };
+        processor.AfterBundling += (_, _) => { Console.WriteLine("  Bundled".Green().Bright()); };
+        processor.BeforeWritingSourceMap += (_, e) => { FileHelpers.RemoveReadonlyFlagFromFile(e.ResultFile); };
+        processor.AfterWritingSourceMap += (_, _) => { Console.WriteLine("  Sourcemapped".Green().Bright()); };
 
-        BundleMinifier.BeforeWritingMinFile += (s, e) => { FileHelpers.RemoveReadonlyFlagFromFile(e.ResultFile); };
-        BundleMinifier.AfterWritingMinFile += (s, e) => { Console.WriteLine("  Minified".Green().Bright()); };
-        BundleMinifier.BeforeWritingGzipFile += (s, e) => { FileHelpers.RemoveReadonlyFlagFromFile(e.ResultFile); };
-        BundleMinifier.AfterWritingGzipFile += (s, e) => { Console.WriteLine("  GZipped".Green().Bright()); };
-        BundleMinifier.ErrorMinifyingFile += (s, e) =>
+        BundleMinifier.BeforeWritingMinFile += (_, e) => { FileHelpers.RemoveReadonlyFlagFromFile(e.ResultFile); };
+        BundleMinifier.AfterWritingMinFile += (_, _) => { Console.WriteLine("  Minified".Green().Bright()); };
+        BundleMinifier.BeforeWritingGzipFile += (_, e) => { FileHelpers.RemoveReadonlyFlagFromFile(e.ResultFile); };
+        BundleMinifier.AfterWritingGzipFile += (_, _) => { Console.WriteLine("  GZipped".Green().Bright()); };
+        BundleMinifier.ErrorMinifyingFile += (_, e) =>
         {
             Console.WriteLine($"{string.Join(Environment.NewLine, e.Result.Errors)}");
         };
