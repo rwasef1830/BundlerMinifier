@@ -6,6 +6,7 @@ using System.Text;
 using NUglify;
 using NUglify.JavaScript;
 using ZstdSharp;
+using ZstdSharp.Unsafe;
 
 namespace BundlerMinifier;
 
@@ -179,7 +180,15 @@ public static class BundleMinifier
             minificationChanged,
             minifiedContent,
             "zstd",
-            s => new CompressionStream(s, level: CompressionLevelToZstdLevel(c_CompressionLevel)));
+            s =>
+            {
+                var level = CompressionLevelToZstdLevel(c_CompressionLevel);
+                var compressor = new Compressor();
+                compressor.SetParameter(ZSTD_cParameter.ZSTD_c_compressionLevel, level);
+                compressor.SetParameter(ZSTD_cParameter.ZSTD_c_checksumFlag, 1);
+                compressor.SetParameter(ZSTD_cParameter.ZSTD_c_windowLog, 27);
+                return new CompressionStream(s, compressor);
+            });
     }
 
     static int CompressionLevelToZstdLevel(CompressionLevel compressionLevel)
