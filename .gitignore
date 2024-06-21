@@ -28,5 +28,5 @@ project.lock.json
 launchSettings.json
 /src/BundlerMinifierTest/artifacts/*.br
 /src/BundlerMinifierTest/artifacts/*.gz
-/src/BundlerMinifierTest/artifacts/*.zst
+/src/BundlerMinifierTest/artifacts/*.zstd
 
