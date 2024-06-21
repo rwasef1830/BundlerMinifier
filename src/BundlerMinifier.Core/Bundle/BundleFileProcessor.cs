@@ -39,7 +39,7 @@ public class BundleFileProcessor
     }
 
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-    public bool Process(string fileName, IEnumerable<Bundle> bundles = null)
+    public bool Process(string fileName, IEnumerable<Bundle> bundles = null, bool useParallel = true)
     {
         var info = new FileInfo(fileName);
         bundles ??= BundleHandler.GetBundles(fileName);
@@ -47,7 +47,7 @@ public class BundleFileProcessor
 
         Parallel.ForEach(
             bundles,
-            new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
+            new ParallelOptions { MaxDegreeOfParallelism = useParallel ? Environment.ProcessorCount : 1 },
             bundle =>
             {
                 var localResult = this.ProcessBundle(info.Directory?.FullName, bundle);
