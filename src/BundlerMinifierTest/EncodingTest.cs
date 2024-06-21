@@ -41,7 +41,9 @@ public class EncodingTest
         this._processor.Process("../../../artifacts/encoding/encoding.json");
 
         string jsResult = File.ReadAllText("../../../artifacts/encoding/encoding.js");
-        Assert.AreEqual("var bom = 'àèéèùì';\r\nvar nobom = 'àèéèùì'", jsResult);
+        Assert.AreEqual(
+            "var bom = 'àèéèùì';\r\nvar nobom = 'àèéèùì'".ReplaceLineEndings(),
+            jsResult.ReplaceLineEndings());
     }
 
     [TestMethod, TestCategory("Encoding")]

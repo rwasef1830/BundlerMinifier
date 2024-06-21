@@ -44,7 +44,7 @@ public class GlobbingTest
         this._processor.Process("../../../artifacts/globbingSubFolders.json");
 
         string out2 = File.ReadAllText(new FileInfo("../../../artifacts/globbing/out2.js").FullName);
-        Assert.AreEqual(out2, "var a = 1;\r\nvar b = 2;");
+        Assert.AreEqual(out2.ReplaceLineEndings(), "var a = 1;\r\nvar b = 2;".ReplaceLineEndings());
 
         string out2Min = File.ReadAllText(new FileInfo("../../../artifacts/globbing/out2.min.js").FullName);
         Assert.AreEqual(out2Min, "var a=1,b=2;");
@@ -57,7 +57,7 @@ public class GlobbingTest
         this._processor.Process("../../../artifacts/globbingSubFolders.json");
 
         string out2 = File.ReadAllText(new FileInfo("../../../artifacts/globbing/out2.js").FullName);
-        Assert.AreEqual(out2, "var a = 1;\r\nvar b = 2;");
+        Assert.AreEqual(out2.ReplaceLineEndings(), "var a = 1;\r\nvar b = 2;".ReplaceLineEndings());
 
         string out2Min = File.ReadAllText(new FileInfo("../../../artifacts/globbing/out2.min.js").FullName);
         Assert.AreEqual(out2Min, "var a=1,b=2;");

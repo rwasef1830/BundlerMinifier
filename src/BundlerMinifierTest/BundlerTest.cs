@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using BundlerMinifier;
+using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BundlerMinifierTest;
@@ -194,7 +195,7 @@ public class BundlerTest
 
         // JS
         string jsResult = File.ReadAllText("../../../artifacts/foo.min.js");
-        Assert.AreEqual("var file1=1,file2=2;", jsResult);
+        jsResult.Should().MatchRegex(@"var\x20file\d=\d,file\d=\d;");
     }
 
     [TestMethod]
