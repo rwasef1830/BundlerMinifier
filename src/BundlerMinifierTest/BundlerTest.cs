@@ -183,7 +183,7 @@ public class BundlerTest
         Assert.IsTrue(File.Exists("../../../artifacts/foo.js.zst"));
         Assert.IsTrue(File.Exists("../../../artifacts/minify.min.js"));
         Assert.IsTrue(File.Exists("../../../artifacts/minify.min.js.gz"));
-        Assert.IsTrue(File.Exists("../../../artifacts/minify.min.js.zst"));
+        Assert.IsTrue(File.Exists("../../../artifacts/minify.min.js.zstd"));
     }
 
     [TestMethod]

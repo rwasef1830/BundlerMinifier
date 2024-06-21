@@ -178,7 +178,7 @@ public static class BundleMinifier
             bundle,
             minificationChanged,
             minifiedContent,
-            "zst",
+            "zstd",
             s => new CompressionStream(s, level: CompressionLevelToZstdLevel(c_CompressionLevel)));
     }
 
