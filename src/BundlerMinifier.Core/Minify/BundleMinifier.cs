@@ -182,6 +182,13 @@ public static class BundleMinifier
             "zstd",
             s =>
             {
+                var length = new FileInfo(sourceFile).Length;
+                if (length > uint.MaxValue)
+                {
+                    throw new InvalidOperationException(
+                        $"File {sourceFile} is too large for this tool, length is {length} bytes. Max of 4 GB is supported.");
+                }
+
                 var level = CompressionLevelToZstdLevel(c_CompressionLevel);
                 var compressor = new Compressor();
                 compressor.SetParameter(ZSTD_cParameter.ZSTD_c_compressionLevel, level);
