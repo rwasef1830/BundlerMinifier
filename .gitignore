@@ -29,4 +29,5 @@ launchSettings.json
 /src/BundlerMinifierTest/artifacts/*.br
 /src/BundlerMinifierTest/artifacts/*.gz
 /src/BundlerMinifierTest/artifacts/*.zstd
+/src/BundlerMinifierTest/artifacts/*.map
 
