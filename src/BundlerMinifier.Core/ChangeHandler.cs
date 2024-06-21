@@ -106,7 +106,7 @@ class ChangeHandler : IEquatable<ChangeHandler>
         if ((this.Bundle.GetAbsoluteInputFiles().Count > 1 || this.Bundle.InputFiles.FirstOrDefault() != this.Bundle.OutputFileName)
             && inputLastModified > File.GetLastWriteTimeUtc(this.Bundle.GetAbsoluteOutputFile()))
         {
-            return this._processor.Process(this._configFile, new[] { this.Bundle });
+            return this._processor.Process(this._configFile, new[] { this.Bundle }, true);
         }
 
         return false;

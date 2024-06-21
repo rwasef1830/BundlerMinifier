@@ -187,7 +187,7 @@ public class Watcher
 
                     s_ChangeHandlers.Remove(handler);
                     s_ChangeHandlers.Add(newHandler);
-                    s_Processor.Process(s_ConfigPath, new[] { bundle });
+                    s_Processor.Process(s_ConfigPath, new[] { bundle }, true);
                     anyChanges = true;
                 }
                 else
@@ -222,14 +222,14 @@ public class Watcher
 
                 s_ChangeHandlers.Remove(handler);
                 s_ChangeHandlers.Add(newHandler);
-                s_Processor.Process(s_ConfigPath, new[] { bundle });
+                s_Processor.Process(s_ConfigPath, new[] { bundle }, true);
                 anyChanges = true;
             }
 
             foreach (var bundle in bundlesToProcess)
             {
                 s_ChangeHandlers.Add(new ChangeHandler(s_Processor, s_ConfigPath, bundle));
-                s_Processor.Process(s_ConfigPath, new[] { bundle });
+                s_Processor.Process(s_ConfigPath, new[] { bundle }, true);
                 anyChanges = true;
             }
         }

@@ -39,7 +39,7 @@ public class BundleFileProcessor
     }
 
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-    public bool Process(string fileName, IEnumerable<Bundle> bundles = null, bool useParallel = true)
+    public bool Process(string fileName, IEnumerable<Bundle> bundles = null, bool useParallel = false)
     {
         var info = new FileInfo(fileName);
         bundles ??= BundleHandler.GetBundles(fileName);

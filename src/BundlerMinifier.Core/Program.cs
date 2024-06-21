@@ -218,7 +218,7 @@ class Program
             }
             else
             {
-                processor.Process(configPath, configs);
+                processor.Process(configPath, configs, true);
             }
 
             return 0;

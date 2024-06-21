@@ -137,7 +137,7 @@ public class BundlerTest
     [TestMethod]
     public void Process()
     {
-        this._processor.Process(c_TestBundle, useParallel: false);
+        this._processor.Process(c_TestBundle);
 
         // JS
         string jsResult = File.ReadAllText(new FileInfo("../../../artifacts/foo.min.js").FullName);
@@ -157,7 +157,7 @@ public class BundlerTest
     public void Process_WithMissingFiles_ShouldThrow()
     {
         var ex = Assert.ThrowsException<AggregateException>(() =>
-            this._processor.Process(c_TestBundle.Replace("test1", "test10"), useParallel: false));
+            this._processor.Process(c_TestBundle.Replace("test1", "test10")));
         Assert.AreEqual(ex.InnerException?.GetType(), typeof(FileNotFoundException));
     }
 
@@ -165,7 +165,7 @@ public class BundlerTest
     public void Minify()
     {
         var bundles = BundleHandler.GetBundles(c_TestBundle);
-        this._processor.Process(c_TestBundle, bundles.Where(b => b.OutputFileName == "minify.min.js"), useParallel: false);
+        this._processor.Process(c_TestBundle, bundles.Where(b => b.OutputFileName == "minify.min.js"));
 
         string cssResult = File.ReadAllText(new FileInfo("../../../artifacts/minify.min.js").FullName);
         Assert.AreEqual("var i=1,y=3,o={value:1},o2={...o,newValue:2};\n//# sourceMappingURL=minify.min.js.map", cssResult);
@@ -177,7 +177,7 @@ public class BundlerTest
     [TestMethod]
     public void JustGzip()
     {
-        this._processor.Process(c_TestBundle.Replace("test1", "test3"), useParallel: false);
+        this._processor.Process(c_TestBundle.Replace("test1", "test3"));
         Assert.IsFalse(File.Exists("../../../artifacts/foo.min.js"));
         Assert.IsTrue(File.Exists("../../../artifacts/foo.js.gz"));
         Assert.IsTrue(File.Exists("../../../artifacts/foo.js.br"));
@@ -190,7 +190,7 @@ public class BundlerTest
     [TestMethod]
     public void ProcessWithDirectory()
     {
-        this._processor.Process(c_TestBundle.Replace("test1", "test2"), useParallel: false);
+        this._processor.Process(c_TestBundle.Replace("test1", "test2"));
 
         // JS
         string jsResult = File.ReadAllText("../../../artifacts/foo.min.js");
@@ -200,7 +200,7 @@ public class BundlerTest
     [TestMethod]
     public void InvalidCss()
     {
-        this._processor.Process(c_TestBundle.Replace("test1", "error"), useParallel: false);
+        this._processor.Process(c_TestBundle.Replace("test1", "error"));
 
         bool result = File.Exists("../../../artifacts/error.min.css");
         Assert.IsFalse(result);
@@ -209,7 +209,7 @@ public class BundlerTest
     [TestMethod]
     public void PreserveKnockoutContainerlessBindings()
     {
-        this._processor.Process(c_TestBundle.Replace("test1", "test4"), useParallel: false);
+        this._processor.Process(c_TestBundle.Replace("test1", "test4"));
 
         string htmlResult = File.ReadAllText("../../../artifacts/file3.min.html");
         Assert.AreEqual("<div><!--ko if:observable--><p></p><!--/ko--></div>", htmlResult);
@@ -218,7 +218,7 @@ public class BundlerTest
     [TestMethod]
     public void PreserveJavaScript0EvalStatements()
     {
-        this._processor.Process(c_TestBundle.Replace("test1", "test5"), useParallel: false);
+        this._processor.Process(c_TestBundle.Replace("test1", "test5"));
 
         string jsResult = File.ReadAllText("../../../artifacts/file3.min.js");
         Assert.AreEqual("(function(n){n()})(function(){\"use strict\";var n=(0,eval)(\"this\");console.log(n)});", jsResult);
@@ -227,7 +227,7 @@ public class BundlerTest
     [TestMethod]
     public void KeepOneSpaceWhenCollapsingHtml()
     {
-        this._processor.Process(c_TestBundle.Replace("test1", "test6"), useParallel: false);
+        this._processor.Process(c_TestBundle.Replace("test1", "test6"));
 
         string htmlResult = File.ReadAllText("../../../artifacts/file4.min.html");
         Assert.AreEqual("<div class=\"bold\"><span><i class=\"fa fa-phone\"></i></span> <span>DEF</span></div>", htmlResult);
@@ -238,13 +238,13 @@ public class BundlerTest
     {
         var bundle = c_TestBundle.Replace("test1", "test7");
 
-        var result = this._processor.Process(bundle, useParallel: false);
+        var result = this._processor.Process(bundle);
         Assert.IsTrue(result);
         const string filePath = "../../../artifacts/test7.min.js";
         Assert.IsTrue(File.Exists(filePath));
         var firstFileTime = File.GetLastWriteTimeUtc(filePath);
 
-        result = this._processor.Process(bundle, useParallel: false);
+        result = this._processor.Process(bundle);
         Assert.IsFalse(result);
         var secondFileTime = File.GetLastWriteTimeUtc(filePath);
         Assert.AreEqual(firstFileTime, secondFileTime);
@@ -253,7 +253,7 @@ public class BundlerTest
     [TestMethod]
     public void SupportNewSyntax()
     {
-        this._processor.Process(c_TestBundle.Replace("test1", "test8"), useParallel: false);
+        this._processor.Process(c_TestBundle.Replace("test1", "test8"));
 
         string jsResult = File.ReadAllText("../../../artifacts/test8.min.js");
 
@@ -263,7 +263,7 @@ public class BundlerTest
     [TestMethod]
     public void SupportDoubleAsteriskOperator()
     {
-        this._processor.Process(c_TestBundle.Replace("test1", "test9"), useParallel: false);
+        this._processor.Process(c_TestBundle.Replace("test1", "test9"));
 
         string jsResult = File.ReadAllText("../../../artifacts/test9.min.js");
 
