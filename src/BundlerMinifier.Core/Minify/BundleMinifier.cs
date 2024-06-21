@@ -193,7 +193,10 @@ public static class BundleMinifier
                 var compressor = new Compressor();
                 compressor.SetParameter(ZSTD_cParameter.ZSTD_c_compressionLevel, level);
                 compressor.SetParameter(ZSTD_cParameter.ZSTD_c_checksumFlag, 1);
-                compressor.SetParameter(ZSTD_cParameter.ZSTD_c_windowLog, 27);
+                
+                // Chromium won't load more than this window log.
+                compressor.SetParameter(ZSTD_cParameter.ZSTD_c_windowLog, 23);
+
                 return new CompressionStream(s, compressor);
             });
     }
