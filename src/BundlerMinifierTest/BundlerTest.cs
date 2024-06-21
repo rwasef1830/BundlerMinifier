@@ -180,9 +180,10 @@ public class BundlerTest
         Assert.IsFalse(File.Exists("../../../artifacts/foo.min.js"));
         Assert.IsTrue(File.Exists("../../../artifacts/foo.js.gz"));
         Assert.IsTrue(File.Exists("../../../artifacts/foo.js.br"));
+        Assert.IsTrue(File.Exists("../../../artifacts/foo.js.zst"));
         Assert.IsTrue(File.Exists("../../../artifacts/minify.min.js"));
         Assert.IsTrue(File.Exists("../../../artifacts/minify.min.js.gz"));
-        Assert.IsTrue(File.Exists("../../../artifacts/minify.min.js.br"));
+        Assert.IsTrue(File.Exists("../../../artifacts/minify.min.js.zst"));
     }
 
     [TestMethod]

@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Text;
 using NUglify;
 using NUglify.JavaScript;
+using ZstdSharp;
 
 namespace BundlerMinifier;
 
@@ -127,7 +128,11 @@ public static class BundleMinifier
                 return;
             }
 
-            Directory.CreateDirectory(Path.GetDirectoryName(minFile));
+            if (Path.GetDirectoryName(minFile) is { } directoryName)
+            {
+                Directory.CreateDirectory(directoryName);
+            }
+
             File.WriteAllText(minFile, minResult.MinifiedContent, new UTF8Encoding(false));
             OnAfterWritingMinFile(minResult.FileName, minFile, bundle, true);
         }
@@ -141,6 +146,7 @@ public static class BundleMinifier
     {
         GzipFile(sourceFile, bundle, minificationChanged, minifiedContent);
         BrotliFile(sourceFile, bundle, minificationChanged, minifiedContent);
+        ZstdFile(sourceFile, bundle, minificationChanged, minifiedContent);
     }
 
     static void GzipFile(string sourceFile, Bundle bundle, bool minificationChanged, string minifiedContent)
@@ -163,6 +169,29 @@ public static class BundleMinifier
             minifiedContent,
             "br",
             s => new BrotliStream(s, c_CompressionLevel));
+    }
+    
+    static void ZstdFile(string sourceFile, Bundle bundle, bool minificationChanged, string minifiedContent)
+    {
+        CompressFile(
+            sourceFile,
+            bundle,
+            minificationChanged,
+            minifiedContent,
+            "zst",
+            s => new CompressionStream(s, level: CompressionLevelToZstdLevel(c_CompressionLevel)));
+    }
+
+    static int CompressionLevelToZstdLevel(CompressionLevel compressionLevel)
+    {
+        return compressionLevel switch
+        {
+            CompressionLevel.Optimal => 15,
+            CompressionLevel.Fastest => 5,
+            CompressionLevel.NoCompression => 0,
+            CompressionLevel.SmallestSize => 22,
+            _ => throw new ArgumentOutOfRangeException(nameof(compressionLevel), compressionLevel, null)
+        };
     }
 
     [SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times")]
