@@ -12,7 +12,7 @@ namespace BundlerMinifier;
 [PublicAPI]
 public class BundleFileProcessor
 {
-    static readonly string[] s_Supported = { ".JS", ".CSS", ".HTML", ".HTM" };
+    static readonly string[] s_Supported = [".JS", ".CSS", ".HTML", ".HTM"];
 
     public static bool IsSupported(params string[] files)
     {
@@ -135,7 +135,7 @@ public class BundleFileProcessor
                 {
                     this.OnBeforeBundling(bundle, baseFolder, true);
                     var outputFileDirectory = Directory.GetParent(outputFile);
-                    outputFileDirectory.Create();
+                    outputFileDirectory?.Create();
 
                     File.WriteAllText(outputFile, bundle.Output, new UTF8Encoding(false));
                     this.OnAfterBundling(bundle, baseFolder, true);
@@ -223,7 +223,12 @@ public class BundleFileProcessor
 
         string minFile = BundleMinifier.GetMinFileName(bundle.GetAbsoluteOutputFile());
         string mapFile = minFile + ".map";
-        string gzFile = minFile + ".gz";
+        var compressedFileNames = new[]
+        {
+            minFile + ".gz",
+            minFile + ".br",
+            minFile + ".zstd"
+        };
 
         if (File.Exists(minFile))
         {
@@ -239,14 +244,17 @@ public class BundleFileProcessor
             Console.WriteLine($"Deleted {mapFile.Cyan().Bright()}");
         }
 
-        if (!File.Exists(gzFile))
+        foreach (var compressFileName in compressedFileNames)
         {
-            return;
-        }
+            if (!File.Exists(compressFileName))
+            {
+                return;
+            }
 
-        FileHelpers.RemoveReadonlyFlagFromFile(gzFile);
-        File.Delete(gzFile);
-        Console.WriteLine($"Deleted {gzFile.Cyan().Bright()}");
+            FileHelpers.RemoveReadonlyFlagFromFile(compressFileName);
+            File.Delete(compressFileName);
+            Console.WriteLine($"Deleted {compressFileName.Cyan().Bright()}");
+        }
     }
 
     public event EventHandler<BundleFileEventArgs> Processing;
