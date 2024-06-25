@@ -112,12 +112,14 @@ class Program
             {
                 isNoColor = true;
             }
+            else if (currentArgDisableParallel)
+            {
+                useParallel = false;
+            }
             else
             {
                 configurations.Add(args[i]);
             }
-
-            useParallel = !currentArgDisableParallel;
         }
 
         if (isNoColor)
