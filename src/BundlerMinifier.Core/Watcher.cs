@@ -16,12 +16,18 @@ public class Watcher
     static string s_ConfigPath;
     static bool s_WatchingAll;
     static BundleFileProcessor s_Processor;
+    static bool s_UseParallel;
 
     [SuppressMessage("ReSharper", "HeapView.ClosureAllocation")]
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-    public static bool Configure(BundleFileProcessor processor, List<string> configurations, string configPath)
+    public static bool Configure(
+        BundleFileProcessor processor,
+        List<string> configurations,
+        string configPath,
+        bool useParallel)
     {
         s_Processor = processor;
+        s_UseParallel = useParallel;
 
         if (!BundleHandler.TryGetBundles(configPath, out var bundles))
         {
@@ -37,7 +43,7 @@ public class Watcher
 
                 if (bundle != null)
                 {
-                    s_ChangeHandlers.Add(new ChangeHandler(processor, configPath, bundle));
+                    s_ChangeHandlers.Add(new ChangeHandler(processor, configPath, bundle, s_UseParallel));
                 }
             }
         }
@@ -45,7 +51,7 @@ public class Watcher
         {
             foreach (var bundle in bundles)
             {
-                s_ChangeHandlers.Add(new ChangeHandler(processor, configPath, bundle));
+                s_ChangeHandlers.Add(new ChangeHandler(processor, configPath, bundle, s_UseParallel));
             }
 
             s_WatchingAll = true;
@@ -178,7 +184,7 @@ public class Watcher
 
                 if (bundle != null)
                 {
-                    var newHandler = new ChangeHandler(s_Processor, bundle.FileName, bundle);
+                    var newHandler = new ChangeHandler(s_Processor, bundle.FileName, bundle, s_UseParallel);
 
                     if (newHandler.Equals(handler))
                     {
@@ -187,7 +193,7 @@ public class Watcher
 
                     s_ChangeHandlers.Remove(handler);
                     s_ChangeHandlers.Add(newHandler);
-                    s_Processor.Process(s_ConfigPath, new[] { bundle }, true);
+                    s_Processor.Process(s_ConfigPath, new[] { bundle }, s_UseParallel);
                     anyChanges = true;
                 }
                 else
@@ -200,12 +206,15 @@ public class Watcher
         }
         else
         {
-            HashSet<Bundle> bundlesToProcess = new HashSet<Bundle>(bundles);
+            HashSet<Bundle> bundlesToProcess = [..bundles];
 
             foreach (var handler in oldHandlers)
             {
-                var bundle = bundles.FirstOrDefault(x => string.Equals(x.OutputFileName,
-                    handler.Bundle.OutputFileName, StringComparison.OrdinalIgnoreCase));
+                var bundle = bundles.FirstOrDefault(x =>
+                    string.Equals(
+                        x.OutputFileName,
+                        handler.Bundle.OutputFileName,
+                        StringComparison.OrdinalIgnoreCase));
 
                 if (bundle == null)
                 {
@@ -213,7 +222,7 @@ public class Watcher
                 }
 
                 bundlesToProcess.Remove(bundle);
-                var newHandler = new ChangeHandler(s_Processor, bundle.FileName, bundle);
+                var newHandler = new ChangeHandler(s_Processor, bundle.FileName, bundle, s_UseParallel);
 
                 if (newHandler.Equals(handler))
                 {
@@ -222,14 +231,14 @@ public class Watcher
 
                 s_ChangeHandlers.Remove(handler);
                 s_ChangeHandlers.Add(newHandler);
-                s_Processor.Process(s_ConfigPath, new[] { bundle }, true);
+                s_Processor.Process(s_ConfigPath, new[] { bundle }, s_UseParallel);
                 anyChanges = true;
             }
 
             foreach (var bundle in bundlesToProcess)
             {
-                s_ChangeHandlers.Add(new ChangeHandler(s_Processor, s_ConfigPath, bundle));
-                s_Processor.Process(s_ConfigPath, new[] { bundle }, true);
+                s_ChangeHandlers.Add(new ChangeHandler(s_Processor, s_ConfigPath, bundle, s_UseParallel));
+                s_Processor.Process(s_ConfigPath, new[] { bundle }, s_UseParallel);
                 anyChanges = true;
             }
         }

@@ -80,6 +80,7 @@ class Program
         bool isWatch = false;
         bool isNoColor = false;
         bool isHelp = false;
+        bool useParallel = true;
 
         for (int i = 0; i < readConfigsUntilIndex; ++i)
         {
@@ -87,6 +88,7 @@ class Program
             bool currentArgIsWatch = string.Equals(args[i], "watch", StringComparison.OrdinalIgnoreCase);
             bool currentArgIsNoColor = string.Equals(args[i], "--no-color", StringComparison.OrdinalIgnoreCase);
             bool currentArgIsHelp = string.Equals(args[i], "help", StringComparison.OrdinalIgnoreCase);
+            bool currentArgDisableParallel = string.Equals(args[i], "--disable-parallel", StringComparison.OrdinalIgnoreCase);
             currentArgIsHelp |= string.Equals(args[i], "-h", StringComparison.OrdinalIgnoreCase);
             currentArgIsHelp |= string.Equals(args[i], "--help", StringComparison.OrdinalIgnoreCase);
             currentArgIsHelp |= string.Equals(args[i], "help", StringComparison.OrdinalIgnoreCase);
@@ -114,6 +116,8 @@ class Program
             {
                 configurations.Add(args[i]);
             }
+
+            useParallel = !currentArgDisableParallel;
         }
 
         if (isNoColor)
@@ -135,7 +139,7 @@ class Program
 
         if (isWatch)
         {
-            bool isWatching = Watcher.Configure(processor, configurations, configPath);
+            bool isWatching = Watcher.Configure(processor, configurations, configPath, useParallel);
 
             if (!isWatching)
             {
@@ -151,12 +155,12 @@ class Program
 
         if (configurations.Count == 0)
         {
-            return Run(processor, configPath, null, isClean);
+            return Run(processor, configPath, null, isClean, useParallel);
         }
 
         foreach (string config in configurations)
         {
-            int runResult = Run(processor, configPath, config, isClean);
+            int runResult = Run(processor, configPath, config, isClean, useParallel);
 
             if (runResult < 0)
             {
@@ -189,6 +193,7 @@ class Program
             Console.WriteLine("     - watch                             - Deletes artifacts from previous runs");
             Console.WriteLine("         Watches files that would cause specified rules to run");
             Console.WriteLine("         Not compatible with \"clean\"");
+            Console.WriteLine("     - --disable-parallel                - For watch and build, no parallel bundling.");
             Console.WriteLine("     - --no-color                        - Doesn't colorize output");
             Console.WriteLine("     - [ -? | -h | --help ] to show this help message");
             Console.WriteLine(
@@ -200,7 +205,7 @@ class Program
     }
 
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-    static int Run(BundleFileProcessor processor, string configPath, string file, bool isClean)
+    static int Run(BundleFileProcessor processor, string configPath, string file, bool isClean, bool useParallel)
     {
         var configs = GetConfigs(configPath, file);
 
@@ -218,7 +223,7 @@ class Program
             }
             else
             {
-                processor.Process(configPath, configs, true);
+                processor.Process(configPath, configs, useParallel);
             }
 
             return 0;

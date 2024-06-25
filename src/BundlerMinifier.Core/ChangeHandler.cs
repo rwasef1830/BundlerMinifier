@@ -9,13 +9,16 @@ namespace BundlerMinifier;
 class ChangeHandler : IEquatable<ChangeHandler>
 {
     static readonly string[] s_IgnorePatterns = { "node_modules".AsPathSegment(), "bower_components".AsPathSegment(), "jspm_packages".AsPathSegment() };
-    readonly string _configFile;
+    
     readonly BundleFileProcessor _processor;
+    readonly string _configFile;
+    readonly bool _useParallel;
 
-    public ChangeHandler(BundleFileProcessor processor, string configFile, Bundle bundle)
+    public ChangeHandler(BundleFileProcessor processor, string configFile, Bundle bundle, bool useParallel)
     {
         this._processor = processor;
         this._configFile = configFile;
+        this._useParallel = useParallel;
         this.Bundle = bundle;
     }
 
@@ -106,7 +109,7 @@ class ChangeHandler : IEquatable<ChangeHandler>
         if ((this.Bundle.GetAbsoluteInputFiles().Count > 1 || this.Bundle.InputFiles.FirstOrDefault() != this.Bundle.OutputFileName)
             && inputLastModified > File.GetLastWriteTimeUtc(this.Bundle.GetAbsoluteOutputFile()))
         {
-            return this._processor.Process(this._configFile, new[] { this.Bundle }, true);
+            return this._processor.Process(this._configFile, new[] { this.Bundle }, this._useParallel);
         }
 
         return false;
