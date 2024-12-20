@@ -3,9 +3,9 @@
   <Import Project="..\common.props" />
 
   <PropertyGroup>
-    <Version>7.5.3</Version>
+    <Version>7.6.0</Version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
     <DefineConstants>$(DefineConstants);DOTNET</DefineConstants>
     <AssemblyName>dotnet-bundle</AssemblyName>
     <OutputType>Exe</OutputType>
@@ -21,9 +21,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="JetBrains.Annotations" Version="2023.3.0" />
+    <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
-    <PackageReference Include="ZstdSharp.Port" Version="0.8.1" />
+    <PackageReference Include="ZstdSharp.Port" Version="0.8.4" />
   </ItemGroup>
 
 
