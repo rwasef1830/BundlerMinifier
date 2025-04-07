@@ -3,7 +3,7 @@
   <Import Project="..\common.props" />
 
   <PropertyGroup>
-    <Version>7.6.3</Version>
+    <Version>7.6.4</Version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <TargetFrameworks>net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
     <DefineConstants>$(DefineConstants);DOTNET</DefineConstants>
@@ -37,7 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NUglify" Version="1.21.14" />
+    <PackageReference Include="NUglify" Version="1.21.15" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
