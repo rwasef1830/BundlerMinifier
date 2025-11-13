@@ -76,28 +76,28 @@ public class BundlerTest
         var bundles = BundleHandler.GetBundles(c_TestBundleRecursion).ToList();
             
         var bundleA = bundles.Single(x => x.OutputFileName == "test11a.min.js");
-        Assert.AreEqual(1, bundleA.InputFiles.Count);
+        Assert.HasCount(1, bundleA.InputFiles);
         Assert.AreEqual("file1.js", bundleA.InputFiles[0]);
             
         var bundleB = bundles.Single(x => x.OutputFileName == "test11b.min.js");
-        Assert.AreEqual(2, bundleB.InputFiles.Count);
+        Assert.HasCount(2, bundleB.InputFiles);
         Assert.AreEqual("file1.js", bundleB.InputFiles[0]);
         Assert.AreEqual("file2.js", bundleB.InputFiles[1]);
             
         var bundleC = bundles.Single(x => x.OutputFileName == "test11c.min.js");
-        Assert.AreEqual(3, bundleC.InputFiles.Count);
+        Assert.HasCount(3, bundleC.InputFiles);
         Assert.AreEqual("file3.js", bundleC.InputFiles[0]);
         Assert.AreEqual("file1.js", bundleC.InputFiles[1]);
         Assert.AreEqual("file2.js", bundleC.InputFiles[2]);
             
-        Assert.AreEqual(3, bundles.Count);
+        Assert.HasCount(3, bundles);
     }
         
     [TestMethod]
     public void GetBundles_Recursion_Circular_Fails()
     {
         var bundles = BundleHandler.GetBundles(c_TestBundleRecursionFails).ToList();
-        Assert.AreEqual(0, bundles.Count);
+        Assert.IsEmpty(bundles);
     }
 
     [TestMethod]
@@ -108,7 +108,7 @@ public class BundlerTest
             IncludeInProject = true,
             OutputFileName = this._guid + ".js"
         };
-        bundle.InputFiles.AddRange(new[] { "file1.js", "file2.js" });
+        bundle.InputFiles.AddRange(["file1.js", "file2.js"]);
 
         string filePath = "../../../artifacts/" + this._guid + ".json";
         BundleHandler.AddBundle(filePath, bundle);
@@ -125,7 +125,7 @@ public class BundlerTest
             IncludeInProject = true,
             OutputFileName = this._guid + ".js"
         };
-        bundle.InputFiles.AddRange(new[] { "file1.js", "file2.js" });
+        bundle.InputFiles.AddRange(["file1.js", "file2.js"]);
 
         string filePath = "../../../artifacts/" + this._guid + ".json";
         File.Copy(c_TestBundle, filePath);
@@ -142,7 +142,7 @@ public class BundlerTest
 
         // JS
         string jsResult = File.ReadAllText(new FileInfo("../../../artifacts/foo.min.js").FullName);
-        Assert.IsTrue(jsResult.StartsWith("var file1=1,file2=2"));
+        Assert.StartsWith("var file1=1,file2=2", jsResult);
         Assert.IsTrue(new FileInfo("../../../artifacts/foo.min.js.map").Exists);
 
         // CSS
@@ -151,15 +151,15 @@ public class BundlerTest
 
         // HTML
         string htmlResult = File.ReadAllText("../../../artifacts/foo.min.html");
-        Assert.AreEqual(@"<div>hatæ</div><span tabindex=2><i>hat</i></span>", htmlResult);
+        Assert.AreEqual("<div>hatæ</div><span tabindex=2><i>hat</i></span>", htmlResult);
     }
 
     [TestMethod]
     public void Process_WithMissingFiles_ShouldThrow()
     {
-        var ex = Assert.ThrowsException<AggregateException>(() =>
+        var ex = Assert.ThrowsExactly<AggregateException>(() =>
             this._processor.Process(c_TestBundle.Replace("test1", "test10")));
-        Assert.AreEqual(ex.InnerException?.GetType(), typeof(FileNotFoundException));
+        Assert.AreEqual(typeof(FileNotFoundException), ex.InnerException?.GetType());
     }
 
     [TestMethod]
@@ -172,7 +172,7 @@ public class BundlerTest
         Assert.AreEqual("var i=1,y=3,o={value:1},o2={...o,newValue:2};\n//# sourceMappingURL=minify.min.js.map", cssResult);
 
         string map = File.ReadAllText(new FileInfo("../../../artifacts/minify.min.js.map").FullName);
-        Assert.IsTrue(map.Contains("minify.js"));
+        Assert.Contains("minify.js", map);
     }
 
     [TestMethod]
