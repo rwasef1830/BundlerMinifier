@@ -2,7 +2,7 @@
 using System.IO;
 using System.Linq;
 using BundlerMinifier;
-using FluentAssertions;
+using AwesomeAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BundlerMinifierTest;
@@ -258,7 +258,7 @@ public class BundlerTest
 
         string jsResult = File.ReadAllText("../../../artifacts/test8.min.js");
 
-        Assert.AreEqual("function test(n){for(const t of n)console.log(t)}test([1,2,3,4]);", jsResult);
+        Assert.AreEqual("function test(n){for(const t of n)console.log(t);}test([1,2,3,4]);", jsResult);
     }
 
     [TestMethod]
