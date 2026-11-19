@@ -9,15 +9,18 @@ jobs:
   get-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-dotnet@v1
+      - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: '10.0.x'
-      - uses: actions/checkout@v2
+          dotnet-version: |
+            8.0.x
+            10.0.x
+            11.0.x
+      - uses: actions/checkout@v7
         with:
           ref: 'raif'
           token: ${{ secrets.PAT }}
       - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@v5
+        uses: crazy-max/ghaction-import-gpg@v7
         with:
           gpg_private_key: ${{ secrets.GPG_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}

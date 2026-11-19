@@ -8,22 +8,71 @@ jobs:
   publish:
     name: build, pack & publish
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    env:
+      PROJECT_FILE: src/BundlerMinifier.Core/BundlerMinifier.Core.csproj
+      PACKAGE_ID: bundlerminifier.core.tool
     steps:
-      - uses: actions/setup-dotnet@v1
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: '10.0.x'
-      - uses: actions/checkout@v2
+          dotnet-version: |
+            8.0.x
+            10.0.x
+            11.0.x
+
       - name: run tests
         run: dotnet test
-      - name: publish on version change
-        id: publish_nuget
-        uses: waldosax/publish-nuget@95f8e50d8df92e9bafae7188c5345a3534774d94
+
+      - name: Read package version
+        id: version
+        run: |
+          raw=$(grep -oP '(?<=<Version>)[^<]+' "$PROJECT_FILE" | head -1)
+          # NuGet normalizes x.y.z.0 to x.y.z, and the flatcontainer only serves the normalized id
+          norm=$(echo "$raw" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+)\.0$/\1/')
+          echo "value=$raw" >> "$GITHUB_OUTPUT"
+          echo "normalized=$norm" >> "$GITHUB_OUTPUT"
+
+      - name: Check if version is already published
+        id: published
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+            "https://api.nuget.org/v3-flatcontainer/$PACKAGE_ID/${{ steps.version.outputs.normalized }}/$PACKAGE_ID.nuspec")
+          echo "exists=$([ "$code" = "200" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Build and pack
+        if: steps.published.outputs.exists == 'false'
+        run: |
+          dotnet build "$PROJECT_FILE" -c Release
+          dotnet pack "$PROJECT_FILE" -c Release --no-build -o artifacts \
+            -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg
+
+      - name: NuGet login (OIDC to short-lived API key)
+        if: steps.published.outputs.exists == 'false'
+        id: login
+        uses: NuGet/login@v1
         with:
-          PROJECT_FILE_PATH: src/BundlerMinifier.Core/BundlerMinifier.Core.csproj
-          PACKAGE_NAME: BundlerMinifier.Core.Tool
-          VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
-          TAG_COMMIT: true
-          TAG_FORMAT: '*'
-          NUGET_KEY: ${{secrets.NUGET_API_KEY}}
-          NUGET_SOURCE: https://api.nuget.org
-          INCLUDE_SYMBOLS: true
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Push package and symbols
+        if: steps.published.outputs.exists == 'false'
+        run: |
+          dotnet nuget push "artifacts/*.nupkg" \
+            --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" \
+            --source https://api.nuget.org/v3/index.json
+          dotnet nuget push "artifacts/*.snupkg" \
+            --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" \
+            --source https://symbols.nuget.org/download/packages
+
+      - name: Tag commit
+        if: steps.published.outputs.exists == 'false'
+        run: |
+          version=${{ steps.version.outputs.value }}
+          if git ls-remote --exit-code --tags origin "refs/tags/$version" >/dev/null 2>&1; then
+            echo "tag $version already exists on origin, skipping"
+          else
+            git tag "$version"
+            git push origin "refs/tags/$version"
+          fi
